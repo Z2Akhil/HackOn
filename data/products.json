@@ -1,0 +1,182 @@
+[
+  {
+    "id": "p001",
+    "name": "Sony WH-1000XM5 Headphones",
+    "category": "electronics",
+    "mrp": 29990,
+    "avg_return_rate": 0.08,
+    "top_return_reason": "defective",
+    "image": "/images/headphones.jpg"
+  },
+  {
+    "id": "p002",
+    "name": "Nike Air Max 270 Sneakers (M)",
+    "category": "apparel",
+    "mrp": 12995,
+    "avg_return_rate": 0.22,
+    "top_return_reason": "wrong_size",
+    "image": "/images/sneakers.jpg"
+  },
+  {
+    "id": "p003",
+    "name": "Bajaj Mixer Grinder 750W",
+    "category": "home_appliances",
+    "mrp": 3499,
+    "avg_return_rate": 0.11,
+    "top_return_reason": "defective",
+    "image": "/images/blender.jpg"
+  },
+  {
+    "id": "p004",
+    "name": "Levis 511 Slim Fit Jeans",
+    "category": "apparel",
+    "mrp": 4999,
+    "avg_return_rate": 0.28,
+    "top_return_reason": "wrong_size",
+    "image": "/images/jeans.jpg"
+  },
+  {
+    "id": "p005",
+    "name": "OnePlus Nord CE 4 (8GB/128GB)",
+    "category": "electronics",
+    "mrp": 24999,
+    "avg_return_rate": 0.06,
+    "top_return_reason": "not_as_described",
+    "image": "/images/phone.jpg"
+  },
+  {
+    "id": "p006",
+    "name": "Prestige Induction Cooktop",
+    "category": "home_appliances",
+    "mrp": 2199,
+    "avg_return_rate": 0.09,
+    "top_return_reason": "defective",
+    "image": "/images/cooktop.jpg"
+  },
+  {
+    "id": "p007",
+    "name": "Wildcraft Backpack 45L",
+    "category": "apparel",
+    "mrp": 3299,
+    "avg_return_rate": 0.07,
+    "top_return_reason": "not_as_described",
+    "image": "/images/backpack.jpg"
+  },
+  {
+    "id": "p008",
+    "name": "boAt Airdopes 141 TWS Earbuds",
+    "category": "electronics",
+    "mrp": 1299,
+    "avg_return_rate": 0.13,
+    "top_return_reason": "defective",
+    "image": "/images/earbuds.jpg"
+  },
+  {
+    "id": "p009",
+    "name": "Bombay Dyeing Double Bedsheet Set",
+    "category": "home",
+    "mrp": 1499,
+    "avg_return_rate": 0.15,
+    "top_return_reason": "not_as_described",
+    "image": "/images/bedsheet.jpg"
+  },
+  {
+    "id": "p010",
+    "name": "Pigeon Non-Stick Tawa 30cm",
+    "category": "home_appliances",
+    "mrp": 899,
+    "avg_return_rate": 0.1,
+    "top_return_reason": "defective",
+    "image": "/images/tawa.jpg"
+  },
+  {
+    "id": "p011",
+    "name": "Fastrack Analog Watch (Men)",
+    "category": "accessories",
+    "mrp": 2995,
+    "avg_return_rate": 0.09,
+    "top_return_reason": "not_as_described",
+    "image": "/images/watch.jpg"
+  },
+  {
+    "id": "p012",
+    "name": "Canon PIXMA G3010 Printer",
+    "category": "electronics",
+    "mrp": 13995,
+    "avg_return_rate": 0.1,
+    "top_return_reason": "defective",
+    "image": "/images/printer.jpg"
+  },
+  {
+    "id": "p013",
+    "name": "Puma Men's Track Jacket L",
+    "category": "apparel",
+    "mrp": 2799,
+    "avg_return_rate": 0.19,
+    "top_return_reason": "wrong_size",
+    "image": "/images/jacket.jpg"
+  },
+  {
+    "id": "p014",
+    "name": "Mi 80cm 4K UHD Smart TV",
+    "category": "electronics",
+    "mrp": 54999,
+    "avg_return_rate": 0.05,
+    "top_return_reason": "defective",
+    "image": "/images/tv.jpg"
+  },
+  {
+    "id": "p015",
+    "name": "Himalaya Face Wash Combo Pack",
+    "category": "beauty",
+    "mrp": 349,
+    "avg_return_rate": 0.04,
+    "top_return_reason": "not_as_described",
+    "image": "/images/facewash.jpg"
+  },
+  {
+    "id": "p016",
+    "name": "Solimo Yoga Mat with Carry Strap",
+    "category": "sports",
+    "mrp": 599,
+    "avg_return_rate": 0.06,
+    "top_return_reason": "not_as_described",
+    "image": "/images/yogamat.jpg"
+  },
+  {
+    "id": "p017",
+    "name": "Havells 1.5T Inverter Split AC",
+    "category": "home_appliances",
+    "mrp": 42990,
+    "avg_return_rate": 0.04,
+    "top_return_reason": "defective",
+    "image": "/images/ac.jpg"
+  },
+  {
+    "id": "p018",
+    "name": "Casio Scientific Calculator FX-991EX",
+    "category": "electronics",
+    "mrp": 1295,
+    "avg_return_rate": 0.05,
+    "top_return_reason": "defective",
+    "image": "/images/calculator.jpg"
+  },
+  {
+    "id": "p019",
+    "name": "Duroflex Orthopaedic 6-Inch Mattress",
+    "category": "home",
+    "mrp": 15999,
+    "avg_return_rate": 0.08,
+    "top_return_reason": "not_as_described",
+    "image": "/images/mattress.jpg"
+  },
+  {
+    "id": "p020",
+    "name": "Skechers Go Walk 7 (Women W7)",
+    "category": "apparel",
+    "mrp": 5495,
+    "avg_return_rate": 0.24,
+    "top_return_reason": "wrong_size",
+    "image": "/images/walkshoes.jpg"
+  }
+]

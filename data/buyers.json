@@ -1,0 +1,149 @@
+[
+  {
+    "id": "b001",
+    "name": "Ankit Sharma",
+    "price_band": "budget",
+    "category_affinity": [
+      "electronics",
+      "home_appliances"
+    ],
+    "eco_preference": 0.8,
+    "grade_tolerance": [
+      "A",
+      "A-",
+      "B+"
+    ]
+  },
+  {
+    "id": "b002",
+    "name": "Priya Nair",
+    "price_band": "mid",
+    "category_affinity": [
+      "apparel",
+      "accessories"
+    ],
+    "eco_preference": 0.9,
+    "grade_tolerance": [
+      "A",
+      "A-"
+    ]
+  },
+  {
+    "id": "b003",
+    "name": "Rohan Mehta",
+    "price_band": "budget",
+    "category_affinity": [
+      "electronics",
+      "sports"
+    ],
+    "eco_preference": 0.5,
+    "grade_tolerance": [
+      "A",
+      "A-",
+      "B+",
+      "B"
+    ]
+  },
+  {
+    "id": "b004",
+    "name": "Divya Krishnan",
+    "price_band": "mid",
+    "category_affinity": [
+      "home",
+      "home_appliances"
+    ],
+    "eco_preference": 0.85,
+    "grade_tolerance": [
+      "A",
+      "A-"
+    ]
+  },
+  {
+    "id": "b005",
+    "name": "Saurabh Joshi",
+    "price_band": "budget",
+    "category_affinity": [
+      "electronics",
+      "accessories"
+    ],
+    "eco_preference": 0.4,
+    "grade_tolerance": [
+      "A-",
+      "B+",
+      "B"
+    ]
+  },
+  {
+    "id": "b006",
+    "name": "Meera Iyer",
+    "price_band": "premium",
+    "category_affinity": [
+      "apparel",
+      "beauty"
+    ],
+    "eco_preference": 0.95,
+    "grade_tolerance": [
+      "A"
+    ]
+  },
+  {
+    "id": "b007",
+    "name": "Karan Patel",
+    "price_band": "budget",
+    "category_affinity": [
+      "home_appliances",
+      "home"
+    ],
+    "eco_preference": 0.6,
+    "grade_tolerance": [
+      "A-",
+      "B+",
+      "B"
+    ]
+  },
+  {
+    "id": "b008",
+    "name": "Sneha Rao",
+    "price_band": "mid",
+    "category_affinity": [
+      "electronics",
+      "sports"
+    ],
+    "eco_preference": 0.75,
+    "grade_tolerance": [
+      "A",
+      "A-",
+      "B+"
+    ]
+  },
+  {
+    "id": "b009",
+    "name": "Vikram Desai",
+    "price_band": "premium",
+    "category_affinity": [
+      "electronics",
+      "accessories"
+    ],
+    "eco_preference": 0.7,
+    "grade_tolerance": [
+      "A",
+      "A-"
+    ]
+  },
+  {
+    "id": "b010",
+    "name": "Anjali Singh",
+    "price_band": "budget",
+    "category_affinity": [
+      "apparel",
+      "home"
+    ],
+    "eco_preference": 0.85,
+    "grade_tolerance": [
+      "A",
+      "A-",
+      "B+",
+      "B"
+    ]
+  }
+]

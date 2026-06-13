@@ -1,0 +1,634 @@
+[
+  {
+    "id": "r001",
+    "product_id": "p003",
+    "product_name": "Bajaj Mixer Grinder 750W",
+    "category": "home_appliances",
+    "mrp": 3499,
+    "return_reason": "defective",
+    "customer_id": "c042",
+    "photos": [
+      "/images/blender.jpg"
+    ],
+    "mock_grade": {
+      "grade": "A-",
+      "functional_risk": "low",
+      "defects": [
+        "minor scuff on lid",
+        "light scratches on base"
+      ],
+      "packaging_status": "missing_box",
+      "accessories_complete": true,
+      "confidence": 0.88
+    }
+  },
+  {
+    "id": "r002",
+    "product_id": "p001",
+    "product_name": "Sony WH-1000XM5 Headphones",
+    "category": "electronics",
+    "mrp": 29990,
+    "return_reason": "changed_mind",
+    "customer_id": "c017",
+    "photos": [
+      "/images/headphones.jpg"
+    ],
+    "mock_grade": {
+      "grade": "A",
+      "functional_risk": "none",
+      "defects": [],
+      "packaging_status": "original_box",
+      "accessories_complete": true,
+      "confidence": 0.95
+    }
+  },
+  {
+    "id": "r003",
+    "product_id": "p004",
+    "product_name": "Levis 511 Slim Fit Jeans",
+    "category": "apparel",
+    "mrp": 4999,
+    "return_reason": "wrong_size",
+    "customer_id": "c091",
+    "photos": [
+      "/images/jeans.jpg"
+    ],
+    "mock_grade": {
+      "grade": "A",
+      "functional_risk": "none",
+      "defects": [],
+      "packaging_status": "original_box",
+      "accessories_complete": true,
+      "confidence": 0.97
+    }
+  },
+  {
+    "id": "r004",
+    "product_id": "p009",
+    "product_name": "Bombay Dyeing Double Bedsheet Set",
+    "category": "home",
+    "mrp": 1499,
+    "return_reason": "not_as_described",
+    "customer_id": "c055",
+    "photos": [
+      "/images/bedsheet.jpg"
+    ],
+    "mock_grade": {
+      "grade": "A",
+      "functional_risk": "none",
+      "defects": [
+        "colour slightly different from listing"
+      ],
+      "packaging_status": "original_box",
+      "accessories_complete": true,
+      "confidence": 0.91
+    }
+  },
+  {
+    "id": "r005",
+    "product_id": "p008",
+    "product_name": "boAt Airdopes 141 TWS Earbuds",
+    "category": "electronics",
+    "mrp": 1299,
+    "return_reason": "defective",
+    "customer_id": "c033",
+    "photos": [
+      "/images/earbuds.jpg"
+    ],
+    "mock_grade": {
+      "grade": "B+",
+      "functional_risk": "medium",
+      "defects": [
+        "left earbud intermittent audio",
+        "case hinge loose"
+      ],
+      "packaging_status": "missing_box",
+      "accessories_complete": false,
+      "confidence": 0.82
+    }
+  },
+  {
+    "id": "r006",
+    "product_id": "p002",
+    "product_name": "Nike Air Max 270 Sneakers",
+    "category": "apparel",
+    "mrp": 12995,
+    "return_reason": "wrong_size",
+    "customer_id": "c078",
+    "photos": [
+      "/images/sneakers.jpg"
+    ],
+    "mock_grade": {
+      "grade": "A",
+      "functional_risk": "none",
+      "defects": [],
+      "packaging_status": "original_box",
+      "accessories_complete": true,
+      "confidence": 0.96
+    }
+  },
+  {
+    "id": "r007",
+    "product_id": "p011",
+    "product_name": "Fastrack Analog Watch",
+    "category": "accessories",
+    "mrp": 2995,
+    "return_reason": "not_as_described",
+    "customer_id": "c014",
+    "photos": [
+      "/images/watch.jpg"
+    ],
+    "mock_grade": {
+      "grade": "A-",
+      "functional_risk": "none",
+      "defects": [
+        "strap slightly different shade"
+      ],
+      "packaging_status": "original_box",
+      "accessories_complete": true,
+      "confidence": 0.89
+    }
+  },
+  {
+    "id": "r008",
+    "product_id": "p016",
+    "product_name": "Solimo Yoga Mat",
+    "category": "sports",
+    "mrp": 599,
+    "return_reason": "not_as_described",
+    "customer_id": "c062",
+    "photos": [
+      "/images/yogamat.jpg"
+    ],
+    "mock_grade": {
+      "grade": "A",
+      "functional_risk": "none",
+      "defects": [],
+      "packaging_status": "original_packaging",
+      "accessories_complete": true,
+      "confidence": 0.93
+    }
+  },
+  {
+    "id": "r009",
+    "product_id": "p001",
+    "product_name": "Sony WH-1000XM5 Headphones",
+    "category": "electronics",
+    "mrp": 29990,
+    "return_reason": "defective",
+    "customer_id": "c199",
+    "photos": [
+      "/images/headphones.jpg"
+    ],
+    "mock_grade": {
+      "grade": "A",
+      "functional_risk": "none",
+      "defects": [],
+      "packaging_status": "original_box",
+      "accessories_complete": true,
+      "confidence": 0.95
+    }
+  },
+  {
+    "id": "r010",
+    "product_id": "p008",
+    "product_name": "boAt Airdopes 141 TWS Earbuds",
+    "category": "electronics",
+    "mrp": 1299,
+    "return_reason": "wrong_size",
+    "customer_id": "c067",
+    "photos": [
+      "/images/earbuds.jpg"
+    ],
+    "mock_grade": {
+      "grade": "B+",
+      "functional_risk": "medium",
+      "defects": [
+        "left earbud intermittent audio",
+        "case hinge loose"
+      ],
+      "packaging_status": "missing_box",
+      "accessories_complete": false,
+      "confidence": 0.82
+    }
+  },
+  {
+    "id": "r011",
+    "product_id": "p004",
+    "product_name": "Levis 511 Slim Fit Jeans",
+    "category": "apparel",
+    "mrp": 4999,
+    "return_reason": "defective",
+    "customer_id": "c183",
+    "photos": [
+      "/images/jeans.jpg"
+    ],
+    "mock_grade": {
+      "grade": "A",
+      "functional_risk": "none",
+      "defects": [],
+      "packaging_status": "original_box",
+      "accessories_complete": true,
+      "confidence": 0.97
+    }
+  },
+  {
+    "id": "r012",
+    "product_id": "p001",
+    "product_name": "Sony WH-1000XM5 Headphones",
+    "category": "electronics",
+    "mrp": 29990,
+    "return_reason": "not_as_described",
+    "customer_id": "c018",
+    "photos": [
+      "/images/headphones.jpg"
+    ],
+    "mock_grade": {
+      "grade": "A",
+      "functional_risk": "none",
+      "defects": [],
+      "packaging_status": "original_box",
+      "accessories_complete": true,
+      "confidence": 0.95
+    }
+  },
+  {
+    "id": "r013",
+    "product_id": "p003",
+    "product_name": "Bajaj Mixer Grinder 750W",
+    "category": "home_appliances",
+    "mrp": 3499,
+    "return_reason": "defective",
+    "customer_id": "c065",
+    "photos": [
+      "/images/blender.jpg"
+    ],
+    "mock_grade": {
+      "grade": "A-",
+      "functional_risk": "low",
+      "defects": [
+        "minor scuff on lid",
+        "light scratches on base"
+      ],
+      "packaging_status": "missing_box",
+      "accessories_complete": true,
+      "confidence": 0.88
+    }
+  },
+  {
+    "id": "r014",
+    "product_id": "p009",
+    "product_name": "Bombay Dyeing Double Bedsheet Set",
+    "category": "home",
+    "mrp": 1499,
+    "return_reason": "defective",
+    "customer_id": "c153",
+    "photos": [
+      "/images/bedsheet.jpg"
+    ],
+    "mock_grade": {
+      "grade": "A",
+      "functional_risk": "none",
+      "defects": [
+        "colour slightly different from listing"
+      ],
+      "packaging_status": "original_box",
+      "accessories_complete": true,
+      "confidence": 0.91
+    }
+  },
+  {
+    "id": "r015",
+    "product_id": "p009",
+    "product_name": "Bombay Dyeing Double Bedsheet Set",
+    "category": "home",
+    "mrp": 1499,
+    "return_reason": "not_as_described",
+    "customer_id": "c066",
+    "photos": [
+      "/images/bedsheet.jpg"
+    ],
+    "mock_grade": {
+      "grade": "A",
+      "functional_risk": "none",
+      "defects": [
+        "colour slightly different from listing"
+      ],
+      "packaging_status": "original_box",
+      "accessories_complete": true,
+      "confidence": 0.91
+    }
+  },
+  {
+    "id": "r016",
+    "product_id": "p016",
+    "product_name": "Solimo Yoga Mat",
+    "category": "sports",
+    "mrp": 599,
+    "return_reason": "changed_mind",
+    "customer_id": "c011",
+    "photos": [
+      "/images/yogamat.jpg"
+    ],
+    "mock_grade": {
+      "grade": "A",
+      "functional_risk": "none",
+      "defects": [],
+      "packaging_status": "original_packaging",
+      "accessories_complete": true,
+      "confidence": 0.93
+    }
+  },
+  {
+    "id": "r017",
+    "product_id": "p004",
+    "product_name": "Levis 511 Slim Fit Jeans",
+    "category": "apparel",
+    "mrp": 4999,
+    "return_reason": "not_as_described",
+    "customer_id": "c097",
+    "photos": [
+      "/images/jeans.jpg"
+    ],
+    "mock_grade": {
+      "grade": "A",
+      "functional_risk": "none",
+      "defects": [],
+      "packaging_status": "original_box",
+      "accessories_complete": true,
+      "confidence": 0.97
+    }
+  },
+  {
+    "id": "r018",
+    "product_id": "p008",
+    "product_name": "boAt Airdopes 141 TWS Earbuds",
+    "category": "electronics",
+    "mrp": 1299,
+    "return_reason": "wrong_size",
+    "customer_id": "c065",
+    "photos": [
+      "/images/earbuds.jpg"
+    ],
+    "mock_grade": {
+      "grade": "B+",
+      "functional_risk": "medium",
+      "defects": [
+        "left earbud intermittent audio",
+        "case hinge loose"
+      ],
+      "packaging_status": "missing_box",
+      "accessories_complete": false,
+      "confidence": 0.82
+    }
+  },
+  {
+    "id": "r019",
+    "product_id": "p002",
+    "product_name": "Nike Air Max 270 Sneakers",
+    "category": "apparel",
+    "mrp": 12995,
+    "return_reason": "defective",
+    "customer_id": "c033",
+    "photos": [
+      "/images/sneakers.jpg"
+    ],
+    "mock_grade": {
+      "grade": "A",
+      "functional_risk": "none",
+      "defects": [],
+      "packaging_status": "original_box",
+      "accessories_complete": true,
+      "confidence": 0.96
+    }
+  },
+  {
+    "id": "r020",
+    "product_id": "p011",
+    "product_name": "Fastrack Analog Watch",
+    "category": "accessories",
+    "mrp": 2995,
+    "return_reason": "defective",
+    "customer_id": "c101",
+    "photos": [
+      "/images/watch.jpg"
+    ],
+    "mock_grade": {
+      "grade": "A-",
+      "functional_risk": "none",
+      "defects": [
+        "strap slightly different shade"
+      ],
+      "packaging_status": "original_box",
+      "accessories_complete": true,
+      "confidence": 0.89
+    }
+  },
+  {
+    "id": "r021",
+    "product_id": "p002",
+    "product_name": "Nike Air Max 270 Sneakers",
+    "category": "apparel",
+    "mrp": 12995,
+    "return_reason": "changed_mind",
+    "customer_id": "c021",
+    "photos": [
+      "/images/sneakers.jpg"
+    ],
+    "mock_grade": {
+      "grade": "A",
+      "functional_risk": "none",
+      "defects": [],
+      "packaging_status": "original_box",
+      "accessories_complete": true,
+      "confidence": 0.96
+    }
+  },
+  {
+    "id": "r022",
+    "product_id": "p016",
+    "product_name": "Solimo Yoga Mat",
+    "category": "sports",
+    "mrp": 599,
+    "return_reason": "defective",
+    "customer_id": "c106",
+    "photos": [
+      "/images/yogamat.jpg"
+    ],
+    "mock_grade": {
+      "grade": "A",
+      "functional_risk": "none",
+      "defects": [],
+      "packaging_status": "original_packaging",
+      "accessories_complete": true,
+      "confidence": 0.93
+    }
+  },
+  {
+    "id": "r023",
+    "product_id": "p001",
+    "product_name": "Sony WH-1000XM5 Headphones",
+    "category": "electronics",
+    "mrp": 29990,
+    "return_reason": "changed_mind",
+    "customer_id": "c170",
+    "photos": [
+      "/images/headphones.jpg"
+    ],
+    "mock_grade": {
+      "grade": "A",
+      "functional_risk": "none",
+      "defects": [],
+      "packaging_status": "original_box",
+      "accessories_complete": true,
+      "confidence": 0.95
+    }
+  },
+  {
+    "id": "r024",
+    "product_id": "p002",
+    "product_name": "Nike Air Max 270 Sneakers",
+    "category": "apparel",
+    "mrp": 12995,
+    "return_reason": "wrong_size",
+    "customer_id": "c190",
+    "photos": [
+      "/images/sneakers.jpg"
+    ],
+    "mock_grade": {
+      "grade": "A",
+      "functional_risk": "none",
+      "defects": [],
+      "packaging_status": "original_box",
+      "accessories_complete": true,
+      "confidence": 0.96
+    }
+  },
+  {
+    "id": "r025",
+    "product_id": "p001",
+    "product_name": "Sony WH-1000XM5 Headphones",
+    "category": "electronics",
+    "mrp": 29990,
+    "return_reason": "defective",
+    "customer_id": "c179",
+    "photos": [
+      "/images/headphones.jpg"
+    ],
+    "mock_grade": {
+      "grade": "A",
+      "functional_risk": "none",
+      "defects": [],
+      "packaging_status": "original_box",
+      "accessories_complete": true,
+      "confidence": 0.95
+    }
+  },
+  {
+    "id": "r026",
+    "product_id": "p009",
+    "product_name": "Bombay Dyeing Double Bedsheet Set",
+    "category": "home",
+    "mrp": 1499,
+    "return_reason": "changed_mind",
+    "customer_id": "c030",
+    "photos": [
+      "/images/bedsheet.jpg"
+    ],
+    "mock_grade": {
+      "grade": "A",
+      "functional_risk": "none",
+      "defects": [
+        "colour slightly different from listing"
+      ],
+      "packaging_status": "original_box",
+      "accessories_complete": true,
+      "confidence": 0.91
+    }
+  },
+  {
+    "id": "r027",
+    "product_id": "p009",
+    "product_name": "Bombay Dyeing Double Bedsheet Set",
+    "category": "home",
+    "mrp": 1499,
+    "return_reason": "defective",
+    "customer_id": "c107",
+    "photos": [
+      "/images/bedsheet.jpg"
+    ],
+    "mock_grade": {
+      "grade": "A",
+      "functional_risk": "none",
+      "defects": [
+        "colour slightly different from listing"
+      ],
+      "packaging_status": "original_box",
+      "accessories_complete": true,
+      "confidence": 0.91
+    }
+  },
+  {
+    "id": "r028",
+    "product_id": "p008",
+    "product_name": "boAt Airdopes 141 TWS Earbuds",
+    "category": "electronics",
+    "mrp": 1299,
+    "return_reason": "not_as_described",
+    "customer_id": "c172",
+    "photos": [
+      "/images/earbuds.jpg"
+    ],
+    "mock_grade": {
+      "grade": "B+",
+      "functional_risk": "medium",
+      "defects": [
+        "left earbud intermittent audio",
+        "case hinge loose"
+      ],
+      "packaging_status": "missing_box",
+      "accessories_complete": false,
+      "confidence": 0.82
+    }
+  },
+  {
+    "id": "r029",
+    "product_id": "p002",
+    "product_name": "Nike Air Max 270 Sneakers",
+    "category": "apparel",
+    "mrp": 12995,
+    "return_reason": "wrong_size",
+    "customer_id": "c104",
+    "photos": [
+      "/images/sneakers.jpg"
+    ],
+    "mock_grade": {
+      "grade": "A",
+      "functional_risk": "none",
+      "defects": [],
+      "packaging_status": "original_box",
+      "accessories_complete": true,
+      "confidence": 0.96
+    }
+  },
+  {
+    "id": "r030",
+    "product_id": "p002",
+    "product_name": "Nike Air Max 270 Sneakers",
+    "category": "apparel",
+    "mrp": 12995,
+    "return_reason": "wrong_size",
+    "customer_id": "c181",
+    "photos": [
+      "/images/sneakers.jpg"
+    ],
+    "mock_grade": {
+      "grade": "A",
+      "functional_risk": "none",
+      "defects": [],
+      "packaging_status": "original_box",
+      "accessories_complete": true,
+      "confidence": 0.96
+    }
+  }
+]

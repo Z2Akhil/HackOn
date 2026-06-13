@@ -1,0 +1,34 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.venv/
+venv/
+*.pkl
+*.egg-info/
+dist/
+build/
+
+# Node
+node_modules/
+.next/
+.vercel/
+*.local
+
+# Env
+.env
+.env.local
+.env*.local
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Models (large binary — regenerate with train_prevention.py)
+models/prevention_model.pkl
+
+# Editor
+.vscode/
+.idea/
+prompt.md
+CLAUDE.md
