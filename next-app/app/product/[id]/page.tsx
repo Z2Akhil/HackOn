@@ -76,6 +76,7 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
           </div>
 
 
+
           {/* Product stats */}
           <div className="grid grid-cols-3 gap-2">
             {[

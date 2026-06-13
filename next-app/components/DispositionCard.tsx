@@ -197,15 +197,24 @@ export default function DispositionCard({
           )}
         </div>
 
-        {disposition.decision === "resell" && (
+        <div className="flex gap-3">
+          {disposition.decision === "resell" && (
+            <Link
+              href="/marketplace"
+              className="flex-1 flex items-center justify-center gap-2 font-semibold py-3 rounded-xl transition-all hover:opacity-90 active:scale-[0.98]"
+              style={{ background: "#10b981", color: "#0c0c0e", fontFamily: "Figtree, sans-serif" }}
+            >
+              View in Marketplace →
+            </Link>
+          )}
           <Link
-            href="/marketplace"
-            className="flex items-center justify-center gap-2 w-full font-semibold py-3 rounded-xl transition-all hover:opacity-90 active:scale-[0.98]"
-            style={{ background: "#10b981", color: "#0c0c0e", fontFamily: "Figtree, sans-serif" }}
+            href="/dashboard"
+            className="flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm font-semibold transition-all hover:opacity-80"
+            style={{ background: "#111113", color: "#52525b", border: "1px solid #27272a", fontFamily: "Figtree, sans-serif" }}
           >
-            View in Marketplace →
+            Ops Dashboard →
           </Link>
-        )}
+        </div>
       </div>
     </div>
   );

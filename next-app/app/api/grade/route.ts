@@ -7,6 +7,19 @@ const MOCK_GRADES: Record<string, GradeResult> = {
   damaged:  { grade: "B+", functional_risk: "medium", defects: ["cracked corner", "missing cable"],           packaging_status: "missing_box",     accessories_complete: false, confidence: 0.79 },
 };
 
+const GRADE_ORDER = ["A", "A-", "B+", "B", "C"];
+
+// Returns the worse of two grades (further right in GRADE_ORDER = worse)
+function worstGrade(a: GradeResult, b: GradeResult): GradeResult {
+  const ai = GRADE_ORDER.indexOf(a.grade);
+  const bi = GRADE_ORDER.indexOf(b.grade);
+  if (bi > ai) {
+    // b is worse — merge defects from both into b
+    return { ...b, defects: [...new Set([...a.defects, ...b.defects])] };
+  }
+  return { ...a, defects: [...new Set([...a.defects, ...b.defects])] };
+}
+
 const GRADE_PROMPT = `You are a product condition grader for an e-commerce returns system. Analyze this product image carefully and return ONLY valid JSON — no markdown, no explanation, just the JSON object.
 
 Schema (use exactly these values):
@@ -43,7 +56,6 @@ async function callGemini(imageBase64: string, mimeType: string): Promise<GradeR
     ]);
 
     const text = result.response.text().trim();
-    // Strip markdown code fences if model adds them
     const json = text.replace(/^```json?\n?/, "").replace(/\n?```$/, "").trim();
     return JSON.parse(json) as GradeResult;
   } catch {
@@ -56,27 +68,51 @@ export async function POST(req: NextRequest) {
     const formData = await req.formData();
     const mockKey = formData.get("mock") as string | null;
 
-    // Explicit mock requested (demo safety net)
     if (mockKey && MOCK_GRADES[mockKey]) {
       return NextResponse.json(MOCK_GRADES[mockKey]);
     }
 
-    const file = formData.get("image") as File | null;
-    if (!file) {
+    // Collect frames: single image OR up to 3 video frames
+    const frameFiles: File[] = [];
+    const single = formData.get("image") as File | null;
+    if (single) frameFiles.push(single);
+
+    for (let i = 0; i <= 2; i++) {
+      const f = formData.get(`frame${i}`) as File | null;
+      if (f) frameFiles.push(f);
+    }
+
+    if (frameFiles.length === 0) {
       return NextResponse.json(MOCK_GRADES["default"]);
     }
 
-    const bytes = await file.arrayBuffer();
-    const base64 = Buffer.from(bytes).toString("base64");
-    const mimeType = file.type || "image/jpeg";
+    // Analyze each frame in parallel
+    const results = await Promise.all(
+      frameFiles.map(async (file) => {
+        try {
+          const bytes = await file.arrayBuffer();
+          const base64 = Buffer.from(bytes).toString("base64");
+          return await callGemini(base64, file.type || "image/jpeg");
+        } catch {
+          return null;
+        }
+      })
+    );
 
-    const geminiResult = await callGemini(base64, mimeType);
-    if (geminiResult) {
-      return NextResponse.json(geminiResult);
+    const valid = results.filter((r): r is GradeResult => r !== null && !!r.grade);
+
+    if (valid.length === 0) {
+      return NextResponse.json({ ...MOCK_GRADES["default"], mock: true });
     }
 
-    // Fallback mock — demo never breaks
-    return NextResponse.json({ ...MOCK_GRADES["default"], mock: true });
+    // Aggregate: worst-case grade, union of all defects, average confidence
+    const aggregated = valid.reduce((acc, cur) => worstGrade(acc, cur));
+    aggregated.confidence = parseFloat(
+      (valid.reduce((s, r) => s + r.confidence, 0) / valid.length).toFixed(2)
+    );
+    aggregated.defects = [...new Set(aggregated.defects)];
+
+    return NextResponse.json(aggregated);
   } catch {
     return NextResponse.json({ ...MOCK_GRADES["default"], mock: true });
   }

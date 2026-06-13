@@ -1,5 +1,6 @@
 import { getProducts } from "@/lib/data";
 import ProductCard from "@/components/ProductCard";
+import Link from "next/link";
 
 export default function HomePage() {
   const products = getProducts();
@@ -40,6 +41,24 @@ export default function HomePage() {
                 <div className="text-xs" style={{ color: "#52525b", fontFamily: "Figtree, sans-serif" }}>{stat.label}</div>
               </div>
             ))}
+          </div>
+
+          {/* Demo flow CTA */}
+          <div className="flex flex-wrap gap-3 justify-center mt-8 animate-fade-up delay-2">
+            <Link
+              href="/account"
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold text-sm transition-all hover:opacity-90 active:scale-[0.98]"
+              style={{ background: "#10b981", color: "#0c0c0e", fontFamily: "Figtree, sans-serif" }}
+            >
+              ♻ My Orders & Returns
+            </Link>
+            <Link
+              href="/marketplace"
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold text-sm transition-all hover:opacity-80"
+              style={{ background: "#111113", color: "#fafafa", border: "1px solid #3f3f46", fontFamily: "Figtree, sans-serif" }}
+            >
+              Browse Marketplace →
+            </Link>
           </div>
         </div>
       </div>

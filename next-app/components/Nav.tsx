@@ -1,16 +1,32 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useState, useEffect } from "react";
 
 const links = [
   { href: "/", label: "Shop" },
-  { href: "/return", label: "Returns" },
   { href: "/marketplace", label: "Marketplace" },
   { href: "/dashboard", label: "Ops" },
 ];
 
 export default function Nav() {
   const path = usePathname();
+  const [initials, setInitials] = useState("R");
+
+  useEffect(() => {
+    function syncInitials() {
+      try {
+        const stored = localStorage.getItem("reloop_profile");
+        if (stored) {
+          const name = JSON.parse(stored).name as string;
+          setInitials(name.split(" ").map((w: string) => w[0]).join("").slice(0, 2).toUpperCase());
+        }
+      } catch {}
+    }
+    syncInitials();
+    window.addEventListener("storage", syncInitials);
+    return () => window.removeEventListener("storage", syncInitials);
+  }, []);
   return (
     <nav className="border-b sticky top-0 z-50" style={{ background: "rgba(12,12,14,0.85)", backdropFilter: "blur(20px)", borderColor: "#27272a" }}>
       <div className="max-w-6xl mx-auto px-5 h-14 flex items-center justify-between">
@@ -52,6 +68,14 @@ export default function Nav() {
             <div className="w-1.5 h-1.5 rounded-full pulse-dot" style={{ background: "#10b981" }} />
             <span className="text-xs font-semibold" style={{ color: "#10b981", fontFamily: "Figtree, sans-serif" }}>AI Live</span>
           </div>
+          <Link
+            href="/account"
+            className="w-8 h-8 rounded-lg flex items-center justify-center text-sm font-black transition-all hover:opacity-80"
+            style={{ background: "linear-gradient(135deg,#10b981,#065f46)", color: "#fff", fontFamily: "Syne, sans-serif" }}
+            title="My Account"
+          >
+            {initials}
+          </Link>
         </div>
       </div>
     </nav>

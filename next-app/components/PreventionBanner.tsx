@@ -2,13 +2,55 @@
 import { useEffect, useState } from "react";
 import { PreventionScore } from "@/types";
 
-const REASON_NOTE: Record<string, { headline: string; detail: string }> = {
-  wrong_size:       { headline: "Size mismatch is common for this product",  detail: "Many buyers return this item due to sizing. Check the size chart carefully and read reviews for fit guidance before ordering." },
-  defective:        { headline: "Some buyers reported quality issues",       detail: "A portion of returns on this product cite defects on arrival. Inspect carefully upon delivery." },
-  not_as_described: { headline: "Product may differ from listing photos",    detail: "Several buyers noted the item looked different in person. Check all photos and reviews before purchasing." },
-  changed_mind:     { headline: "High impulse-return rate on this product",  detail: "Customers frequently return this item after reconsideration. Make sure it fits your use case before buying." },
-  wrong_variant:    { headline: "Variant mix-ups are common here",           detail: "Double-check colour, size, and model variant before adding to cart — wrong variant is the top return reason." },
+// Pre-computed from returns_train.csv (2000 rows) — category × reason frequency
+const CATEGORY_STATS: Record<string, { reason: string; pct: number }> = {
+  apparel:        { reason: "wrong_size",       pct: 84 },
+  electronics:    { reason: "defective",        pct: 82 },
+  home:           { reason: "not_as_described", pct: 100 },
+  home_appliances:{ reason: "defective",        pct: 100 },
+  accessories:    { reason: "not_as_described", pct: 100 },
+  beauty:         { reason: "not_as_described", pct: 100 },
+  sports:         { reason: "not_as_described", pct: 100 },
 };
+
+function getNote(category: string, reason: string): { headline: string; detail: string } {
+  const stat = CATEGORY_STATS[category];
+  const pct = stat?.reason === reason ? stat.pct : null;
+  const pctStr = pct ? `${pct}% of returns` : "Many returns";
+
+  switch (reason) {
+    case "wrong_size":
+      return {
+        headline: "Size mismatch is the top return reason here",
+        detail: `${pctStr} in this category cite size mismatch. Check the size chart carefully and read fit reviews before ordering.`,
+      };
+    case "defective":
+      return {
+        headline: "Quality issues reported by buyers",
+        detail: `${pctStr} in this category cite defects on arrival. Inspect carefully upon delivery and keep packaging for returns.`,
+      };
+    case "not_as_described":
+      return {
+        headline: "Product may differ from listing photos",
+        detail: `${pctStr} in this category note the item looked different in person. Check all photos and read recent reviews before purchasing.`,
+      };
+    case "changed_mind":
+      return {
+        headline: "High impulse-return rate on this product",
+        detail: "Customers frequently return this after reconsideration. Make sure it fits your use case before buying.",
+      };
+    case "wrong_variant":
+      return {
+        headline: "Variant mix-ups are common here",
+        detail: "Double-check colour, size, and model variant before adding to cart — wrong variant is the top return reason.",
+      };
+    default:
+      return {
+        headline: "Some buyers have returned this product",
+        detail: "Check reviews carefully before purchasing.",
+      };
+  }
+}
 
 export default function PreventionBanner({
   productId, category, topReturnReason,
@@ -41,10 +83,7 @@ export default function PreventionBanner({
   if (!score || score.recommended_intervention === "none") return null;
 
   const isHighRisk = score.recommended_intervention === "show_banner_with_variant_suggestion";
-  const note = REASON_NOTE[topReturnReason] ?? {
-    headline: "Some buyers have returned this product",
-    detail: "Check reviews before purchasing.",
-  };
+  const note = getNote(category, topReturnReason);
 
   return (
     <div

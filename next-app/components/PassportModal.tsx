@@ -2,6 +2,24 @@
 import { useEffect, useState } from "react";
 import { MarketplaceListing } from "@/types";
 
+const CDN = "https://cdn.dummyjson.com/product-images";
+
+// Per-category secondary inspection photos (simulate multi-angle capture)
+const CATEGORY_INSPECTION_PHOTOS: Record<string, string[]> = {
+  electronics:    [`${CDN}/mobile-accessories/apple-airpods/thumbnail.webp`,    `${CDN}/tablets/ipad-mini-2021-starlight/thumbnail.webp`],
+  home_appliances:[`${CDN}/kitchen-accessories/carbon-steel-wok/thumbnail.webp`, `${CDN}/kitchen-accessories/microwave-oven/thumbnail.webp`],
+  apparel:        [`${CDN}/mens-shirts/man-short-sleeve-shirt/thumbnail.webp`,   `${CDN}/womens-shoes/pampi-shoes/thumbnail.webp`],
+  home:           [`${CDN}/furniture/annibale-colombo-sofa/thumbnail.webp`,      `${CDN}/furniture/annibale-colombo-bed/thumbnail.webp`],
+  accessories:    [`${CDN}/mens-watches/rolex-datejust/thumbnail.webp`,          `${CDN}/mens-watches/rolex-datejust/thumbnail.webp`],
+  sports:         [`${CDN}/sports-accessories/tennis-racket/thumbnail.webp`,     `${CDN}/sports-accessories/tennis-racket/thumbnail.webp`],
+  beauty:         [`${CDN}/skin-care/olay-ultra-moisture-shea-butter-body-wash/thumbnail.webp`, `${CDN}/skin-care/olay-ultra-moisture-shea-butter-body-wash/thumbnail.webp`],
+};
+
+function getInspectionPhotos(listing: MarketplaceListing): string[] {
+  const secondary = CATEGORY_INSPECTION_PHOTOS[listing.category] ?? [];
+  return [listing.image, ...secondary].filter(Boolean).slice(0, 3);
+}
+
 interface Match {
   buyer: { id: string; name: string; price_band: string; eco_preference: number };
   score: number;
@@ -35,8 +53,11 @@ function CircularityBar({ score }: { score: number }) {
 export default function PassportModal({ listing, onClose }: { listing: MarketplaceListing; onClose: () => void }) {
   const [matches, setMatches] = useState<Match[]>([]);
   const [loadingMatches, setLoadingMatches] = useState(true);
+  const [lightboxImg, setLightboxImg] = useState<string | null>(null);
+  const [videoPlaying, setVideoPlaying] = useState(false);
   const cfg = GRADE_CONFIG[listing.grade.grade] ?? GRADE_CONFIG["B+"];
   const discount = Math.round((1 - listing.asking_price / listing.mrp) * 100);
+  const inspectionPhotos = getInspectionPhotos(listing);
 
   useEffect(() => {
     fetch(`/api/match/${listing.id}`)
@@ -94,6 +115,74 @@ export default function PassportModal({ listing, onClose }: { listing: Marketpla
         </div>
 
         <div className="p-6 space-y-5">
+
+          {/* Photo gallery */}
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-widest mb-2" style={{ color: "#52525b", fontFamily: "Figtree, sans-serif" }}>
+              Inspection Photos · AI Captured
+            </p>
+            <div className="grid grid-cols-3 gap-2">
+              {inspectionPhotos.map((src, i) => (
+                <button
+                  key={i}
+                  onClick={() => setLightboxImg(src)}
+                  className="relative aspect-square rounded-xl overflow-hidden group transition-all hover:ring-2"
+                  style={{ background: "#18181b", ringColor: "#10b981" } as React.CSSProperties}
+                >
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={src} alt={`Inspection ${i + 1}`} className="w-full h-full object-cover" />
+                  <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity" style={{ background: "rgba(0,0,0,0.5)" }}>
+                    <span className="text-white text-lg">🔍</span>
+                  </div>
+                  {i === 0 && (
+                    <div className="absolute bottom-1 left-1 text-xs px-1.5 py-0.5 rounded font-semibold" style={{ background: "rgba(16,185,129,0.9)", color: "#0c0c0e", fontFamily: "Figtree, sans-serif" }}>
+                      Main
+                    </div>
+                  )}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Video inspection */}
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-widest mb-2" style={{ color: "#52525b", fontFamily: "Figtree, sans-serif" }}>
+              360° Inspection Video
+            </p>
+            {videoPlaying ? (
+              <div className="relative rounded-xl overflow-hidden" style={{ background: "#18181b", border: "1px solid #27272a" }}>
+                <video
+                  className="w-full rounded-xl"
+                  controls
+                  autoPlay
+                  style={{ maxHeight: 220 }}
+                  onError={() => setVideoPlaying(false)}
+                >
+                  <source src="https://www.w3schools.com/html/mov_bbb.mp4" type="video/mp4" />
+                </video>
+                <div className="absolute top-2 right-2 text-xs px-2 py-0.5 rounded font-semibold" style={{ background: "rgba(16,185,129,0.9)", color: "#0c0c0e", fontFamily: "Figtree, sans-serif" }}>
+                  AI Recorded
+                </div>
+              </div>
+            ) : (
+              <button
+                onClick={() => setVideoPlaying(true)}
+                className="relative w-full rounded-xl overflow-hidden group transition-all"
+                style={{ background: "#18181b", border: "1px solid #27272a" }}
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={listing.image} alt="Video thumbnail" className="w-full object-cover" style={{ height: 160, filter: "brightness(0.5)" }} />
+                <div className="absolute inset-0 flex flex-col items-center justify-center gap-2">
+                  <div className="w-12 h-12 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform" style={{ background: "rgba(16,185,129,0.9)" }}>
+                    <span className="text-xl pl-0.5">▶</span>
+                  </div>
+                  <p className="text-xs font-semibold" style={{ color: "#fafafa", fontFamily: "Figtree, sans-serif" }}>Play Inspection Video</p>
+                  <p className="text-xs" style={{ color: "#71717a", fontFamily: "Figtree, sans-serif" }}>Recorded at return · 0:45</p>
+                </div>
+              </button>
+            )}
+          </div>
+
           {/* Grade block */}
           <div className="rounded-xl p-4" style={{ background: cfg.bg, border: `1px solid ${cfg.border}` }}>
             <div className="flex items-center justify-between">
@@ -235,6 +324,30 @@ export default function PassportModal({ listing, onClose }: { listing: Marketpla
           </button>
         </div>
       </div>
+
+      {/* Lightbox */}
+      {lightboxImg && (
+        <div
+          className="fixed inset-0 z-[60] flex items-center justify-center p-4"
+          style={{ background: "rgba(0,0,0,0.92)" }}
+          onClick={() => setLightboxImg(null)}
+        >
+          <div className="relative max-w-lg w-full" onClick={e => e.stopPropagation()}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={lightboxImg} alt="Inspection photo" className="w-full rounded-2xl" style={{ maxHeight: "80vh", objectFit: "contain" }} />
+            <button
+              onClick={() => setLightboxImg(null)}
+              className="absolute top-3 right-3 w-9 h-9 rounded-full flex items-center justify-center text-lg"
+              style={{ background: "rgba(0,0,0,0.7)", color: "#fafafa" }}
+            >
+              ✕
+            </button>
+            <div className="absolute bottom-3 left-3 text-xs px-2 py-1 rounded font-semibold" style={{ background: "rgba(16,185,129,0.9)", color: "#0c0c0e", fontFamily: "Figtree, sans-serif" }}>
+              AI Inspection · {listing.product_name}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
