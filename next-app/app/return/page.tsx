@@ -3,6 +3,7 @@ import { useState } from "react";
 import { GradeResult, DispositionResult } from "@/types";
 import GradeCard from "@/components/GradeCard";
 import DispositionCard from "@/components/DispositionCard";
+import ReturnNudgeBanner from "@/components/ReturnNudgeBanner";
 
 const DEMO_ORDERS = [
   { id: "o001", product_id: "p003", product_name: "Bajaj Mixer Grinder 750W", category: "home_appliances", mrp: 3499, ordered: "2026-05-18", emoji: "🏠" },
@@ -166,6 +167,8 @@ export default function ReturnPage() {
       {step === "upload" && selectedOrder && (
         <div className="space-y-5 animate-fade-up">
           <h2 className="font-bold text-lg" style={{ fontFamily: "Syne, sans-serif", color: "#fafafa" }}>Upload photos</h2>
+
+          {reason && <ReturnNudgeBanner reason={reason} />}
 
           {/* OTP fraud check */}
           <div className="rounded-xl p-4" style={{ background: "rgba(59,130,246,0.06)", border: "1px solid rgba(59,130,246,0.2)" }}>

@@ -1,6 +1,7 @@
 // All data hardcoded — no fs reads, works on Vercel serverless
 import { Product, Buyer, MarketplaceListing } from "@/types";
 import { computeCircularityScore } from "./circularity";
+import { seedBuyerGCS } from "./green-credit-engine";
 
 const CDN = "https://cdn.dummyjson.com/product-images";
 
@@ -130,3 +131,187 @@ export const MARKETPLACE_LISTINGS: MarketplaceListing[] = RETURN_EVENTS.map((e, 
     warranty_months: GRADE_WARRANTY[g] ?? 0,
   };
 });
+
+// ============================================================================
+// GCS SEED DATA (initialized at module load time)
+// ============================================================================
+
+// Buyer b001 (Sprout tier, ~355 GCS)
+seedBuyerGCS("b001", [
+  {
+    actionType: "return_resell",
+    delta: 50,
+    timestamp: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
+    entityId: "seed-p001",
+    description: "Return item resold",
+  },
+  {
+    actionType: "return_resell",
+    delta: 50,
+    timestamp: new Date(Date.now() - 28 * 24 * 60 * 60 * 1000).toISOString(),
+    entityId: "seed-p002",
+    description: "Return item resold",
+  },
+  {
+    actionType: "return_resell",
+    delta: 50,
+    timestamp: new Date(Date.now() - 26 * 24 * 60 * 60 * 1000).toISOString(),
+    entityId: "seed-p003",
+    description: "Return item resold",
+  },
+  {
+    actionType: "return_resell",
+    delta: 50,
+    timestamp: new Date(Date.now() - 24 * 24 * 60 * 60 * 1000).toISOString(),
+    entityId: "seed-p004",
+    description: "Return item resold",
+  },
+  {
+    actionType: "return_resell",
+    delta: 50,
+    timestamp: new Date(Date.now() - 22 * 24 * 60 * 60 * 1000).toISOString(),
+    entityId: "seed-p005",
+    description: "Return item resold",
+  },
+  {
+    actionType: "marketplace_purchase",
+    delta: 40,
+    timestamp: new Date(Date.now() - 20 * 24 * 60 * 60 * 1000).toISOString(),
+    entityId: "seed-mp001",
+    description: "Purchased from marketplace",
+  },
+  {
+    actionType: "marketplace_purchase",
+    delta: 40,
+    timestamp: new Date(Date.now() - 18 * 24 * 60 * 60 * 1000).toISOString(),
+    entityId: "seed-mp002",
+    description: "Purchased from marketplace",
+  },
+  {
+    actionType: "shipping_carbon_offset",
+    delta: 25,
+    timestamp: new Date(Date.now() - 16 * 24 * 60 * 60 * 1000).toISOString(),
+    entityId: "seed-ship001",
+    description: "Carbon offset shipping selected",
+  },
+]);
+
+// Buyer b002 (EcoChampion tier, ~535 GCS)
+seedBuyerGCS("b002", [
+  {
+    actionType: "return_refurbish",
+    delta: 50,
+    timestamp: new Date(Date.now() - 35 * 24 * 60 * 60 * 1000).toISOString(),
+    entityId: "seed-refurb001",
+    description: "Return item refurbished",
+  },
+  {
+    actionType: "return_refurbish",
+    delta: 50,
+    timestamp: new Date(Date.now() - 33 * 24 * 60 * 60 * 1000).toISOString(),
+    entityId: "seed-refurb002",
+    description: "Return item refurbished",
+  },
+  {
+    actionType: "return_refurbish",
+    delta: 50,
+    timestamp: new Date(Date.now() - 31 * 24 * 60 * 60 * 1000).toISOString(),
+    entityId: "seed-refurb003",
+    description: "Return item refurbished",
+  },
+  {
+    actionType: "return_refurbish",
+    delta: 50,
+    timestamp: new Date(Date.now() - 29 * 24 * 60 * 60 * 1000).toISOString(),
+    entityId: "seed-refurb004",
+    description: "Return item refurbished",
+  },
+  {
+    actionType: "return_refurbish",
+    delta: 50,
+    timestamp: new Date(Date.now() - 27 * 24 * 60 * 60 * 1000).toISOString(),
+    entityId: "seed-refurb005",
+    description: "Return item refurbished",
+  },
+  {
+    actionType: "return_refurbish",
+    delta: 50,
+    timestamp: new Date(Date.now() - 25 * 24 * 60 * 60 * 1000).toISOString(),
+    entityId: "seed-refurb006",
+    description: "Return item refurbished",
+  },
+  {
+    actionType: "return_refurbish",
+    delta: 50,
+    timestamp: new Date(Date.now() - 23 * 24 * 60 * 60 * 1000).toISOString(),
+    entityId: "seed-refurb007",
+    description: "Return item refurbished",
+  },
+  {
+    actionType: "return_refurbish",
+    delta: 50,
+    timestamp: new Date(Date.now() - 21 * 24 * 60 * 60 * 1000).toISOString(),
+    entityId: "seed-refurb008",
+    description: "Return item refurbished",
+  },
+  {
+    actionType: "marketplace_purchase",
+    delta: 40,
+    timestamp: new Date(Date.now() - 19 * 24 * 60 * 60 * 1000).toISOString(),
+    entityId: "seed-mp003",
+    description: "Purchased from marketplace",
+  },
+  {
+    actionType: "marketplace_purchase",
+    delta: 40,
+    timestamp: new Date(Date.now() - 17 * 24 * 60 * 60 * 1000).toISOString(),
+    entityId: "seed-mp004",
+    description: "Purchased from marketplace",
+  },
+  {
+    actionType: "marketplace_purchase",
+    delta: 40,
+    timestamp: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000).toISOString(),
+    entityId: "seed-mp005",
+    description: "Purchased from marketplace",
+  },
+  {
+    actionType: "shipping_consolidated",
+    delta: 15,
+    timestamp: new Date(Date.now() - 13 * 24 * 60 * 60 * 1000).toISOString(),
+    entityId: "seed-ship002",
+    description: "Consolidated shipping selected",
+  },
+]);
+
+// Buyer b003 (Seedling tier, ~80 GCS)
+seedBuyerGCS("b003", [
+  {
+    actionType: "return_donate",
+    delta: 30,
+    timestamp: new Date(Date.now() - 40 * 24 * 60 * 60 * 1000).toISOString(),
+    entityId: "seed-donate001",
+    description: "Return item donated",
+  },
+  {
+    actionType: "return_recycle",
+    delta: 20,
+    timestamp: new Date(Date.now() - 38 * 24 * 60 * 60 * 1000).toISOString(),
+    entityId: "seed-recycle001",
+    description: "Return item recycled",
+  },
+  {
+    actionType: "marketplace_purchase",
+    delta: 40,
+    timestamp: new Date(Date.now() - 36 * 24 * 60 * 60 * 1000).toISOString(),
+    entityId: "seed-mp006",
+    description: "Purchased from marketplace",
+  },
+  {
+    actionType: "deduction_discretionary_return",
+    delta: -10,
+    timestamp: new Date(Date.now() - 34 * 24 * 60 * 60 * 1000).toISOString(),
+    entityId: "seed-deduct001",
+    description: "Discretionary return deduction (changed_mind)",
+  },
+]);

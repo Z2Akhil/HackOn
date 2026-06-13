@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getListingFlags } from "@/lib/data";
+import { getGCSAggregate } from "@/lib/green-credit-engine";
 
 // Seeded aggregate stats (mix of demo real + synthetic)
 const SEEDED = {
@@ -38,5 +39,14 @@ export async function GET() {
     .filter(([, count]) => count >= 2)
     .map(([product_id, count]) => ({ product_id, flag_count: count }));
 
-  return NextResponse.json({ ...SEEDED, flagged_listings: flaggedListings });
+  const gcsAggregate = getGCSAggregate();
+
+  return NextResponse.json({
+    ...SEEDED,
+    flagged_listings: flaggedListings,
+    // GCS aggregate fields:
+    gcs_total_vouchers_issued: gcsAggregate.totalVouchersIssued,
+    gcs_monthly_credits_earned: gcsAggregate.monthlyCreditsEarned,
+    gcs_tier_counts: gcsAggregate.tierCounts,
+  });
 }

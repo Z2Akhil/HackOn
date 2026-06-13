@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { computeEV } from "@/lib/ev-optimizer";
-import { GradeResult } from "@/types";
+import { recordAction, isDiscretionaryReturn } from "@/lib/green-credit-engine";
+import { GradeResult, EcoActionType } from "@/types";
 import { incrementListingFlag } from "@/lib/data";
 
 async function getGeminiReasoning(
@@ -59,6 +60,38 @@ export async function POST(req: NextRequest) {
 
     if (return_reason === "not_as_described") {
       incrementListingFlag(product_id);
+    }
+
+    // Record action for the disposition decision
+    const actionType = `return_${result.decision}` as EcoActionType;
+    const creditResponse = recordAction({
+      buyerId: body.buyer_id ?? "b001",
+      actionType,
+      entityId: body.product_id,
+      eventId: `disposition-${body.order_id ?? body.product_id}-${Date.now()}`,
+      metadata: {
+        disposition: result.decision,
+        circularityScore: result.circularity_score,
+        returnReason: body.return_reason,
+        deliveryTimestamp: body.delivery_timestamp,
+      },
+    });
+
+    // Update green credits with delta from recordAction
+    result.green_credits = creditResponse.delta;
+
+    // Check if discretionary return and apply deduction if applicable
+    if (isDiscretionaryReturn(body.return_reason)) {
+      recordAction({
+        buyerId: body.buyer_id ?? "b001",
+        actionType: "deduction_discretionary_return",
+        entityId: body.product_id,
+        eventId: `deduction-${body.order_id ?? body.product_id}-${Date.now()}`,
+        metadata: {
+          returnReason: body.return_reason,
+          deliveryTimestamp: body.delivery_timestamp,
+        },
+      });
     }
 
     const geminiReasoning = await getGeminiReasoning(

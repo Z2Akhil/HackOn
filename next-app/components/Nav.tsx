@@ -1,6 +1,7 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import ScoreWidget from "@/components/ScoreWidget";
 
 const links = [
   { href: "/", label: "Shop" },
@@ -48,10 +49,7 @@ export default function Nav() {
         </div>
 
         <div className="flex items-center gap-2">
-          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg" style={{ background: "#18181b", border: "1px solid #27272a" }}>
-            <div className="w-1.5 h-1.5 rounded-full pulse-dot" style={{ background: "#10b981" }} />
-            <span className="text-xs font-semibold" style={{ color: "#10b981", fontFamily: "Figtree, sans-serif" }}>AI Live</span>
-          </div>
+          <ScoreWidget mode="nav" />
         </div>
       </div>
     </nav>

@@ -77,3 +77,79 @@ export interface MarketplaceListing {
   expected_lifespan_years: number;
   warranty_months: number;
 }
+
+// GCS (Green Credit System) Types
+export type BadgeTier = "Seedling" | "Sprout" | "EcoChampion" | "Guardian";
+
+export type EcoActionType =
+  | "return_refurbish"
+  | "return_resell"
+  | "return_donate"
+  | "return_recycle"
+  | "return_exchange"
+  | "marketplace_purchase"
+  | "shipping_consolidated"
+  | "shipping_carbon_offset"
+  | "deduction_discretionary_return";
+
+export interface EcoAction {
+  id: string;
+  actionType: EcoActionType;
+  delta: number;
+  timestamp: string;
+  entityId: string;
+  description: string;
+}
+
+export interface GreenVoucher {
+  id: string;
+  code: string;
+  milestoneGCS: number;
+  discountPct: number;
+  issuedAt: string;
+  expiresAt: string;
+  status: "active" | "expired";
+}
+
+export interface BuyerGCSRecord {
+  buyerId: string;
+  actionLog: EcoAction[];
+  vouchers: GreenVoucher[];
+  processedEventIds: Set<string>;
+  milestonesReached: Set<number>;
+}
+
+export interface GCSResponse {
+  buyerId: string;
+  gcs: number;
+  badgeTier: BadgeTier;
+  actionLog: EcoAction[];
+  vouchers: GreenVoucher[];
+}
+
+export interface GCSAggregate {
+  totalVouchersIssued: number;
+  monthlyCreditsEarned: number;
+  tierCounts: Record<BadgeTier, number>;
+}
+
+export interface PostActionRequest {
+  buyerId: string;
+  actionType: EcoActionType;
+  entityId: string;
+  eventId: string;
+  metadata?: {
+    disposition?: DispositionResult["decision"];
+    circularityScore?: number;
+    returnReason?: string;
+    deliveryTimestamp?: string;
+  };
+}
+
+export interface PostActionResponse {
+  success: boolean;
+  delta: number;
+  newGCS: number;
+  newBadgeTier: BadgeTier;
+  vouchersGenerated: GreenVoucher[];
+}

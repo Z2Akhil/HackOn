@@ -20,10 +20,20 @@ interface DashboardStats {
   top_categories: { category: string; items: number }[];
   monthly_trend: { month: string; prevented: number; processed: number; co2_saved: number }[];
   flagged_listings: { product_id: string; flag_count: number }[];
+  gcs_total_vouchers_issued: number;
+  gcs_monthly_credits_earned: number;
+  gcs_tier_counts: Record<string, number>;
 }
 
 const DISPOSITION_COLORS: Record<string, string> = {
   resell: "#10b981", refurbish: "#3b82f6", donate: "#8b5cf6", recycle: "#22c55e", exchange: "#f59e0b",
+};
+
+const BADGE_TIERS: Record<string, { emoji: string; name: string }> = {
+  "Seedling": { emoji: "🌱", name: "Seedling" },
+  "Sprout": { emoji: "🌿", name: "Sprout" },
+  "EcoChampion": { emoji: "🏆", name: "EcoChampion" },
+  "Guardian": { emoji: "🛡️", name: "Guardian" },
 };
 
 const KPIS = [
@@ -36,6 +46,8 @@ const KPIS = [
   { key: "landfill_avoided_kg",       label: "Landfill Avoided",       icon: "🗑️", format: "num", suffix: "kg" },
   { key: "avg_circularity_score",     label: "Avg Circularity",        icon: "🔄", format: "num", suffix: "/100"},
   { key: "green_credits_awarded",     label: "Green Credits",          icon: "🌿", format: "num"               },
+  { key: "gcs_total_vouchers_issued", label: "Vouchers Issued",        icon: "🎟️", format: "num"               },
+  { key: "gcs_monthly_credits_earned",label: "Credits This Month",     icon: "🌿", format: "num"               },
 ];
 
 const CustomTooltip = ({ active, payload, label }: any) => {
@@ -116,8 +128,26 @@ export default function DashboardPage() {
         })}
       </div>
 
+      {/* Badge Tier Breakdown */}
+      <div className="animate-fade-up delay-2">
+        <h2 className="font-bold mb-3" style={{ fontFamily: "Syne, sans-serif", color: "#fafafa" }}>Badge Tier Breakdown</h2>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          {Object.entries(BADGE_TIERS).map(([tierKey, { emoji, name }]) => {
+            const count = stats.gcs_tier_counts[tierKey] ?? 0;
+            return (
+              <div key={tierKey} className="rounded-xl p-4 text-center" style={{ background: "#111113", border: "1px solid #27272a" }}>
+                <div className="text-3xl mb-2">{emoji}</div>
+                <div className="text-sm font-semibold mb-2" style={{ color: "#fafafa", fontFamily: "Syne, sans-serif" }}>{name}</div>
+                <div className="text-lg font-black" style={{ fontFamily: "Syne, sans-serif", color: "#10b981" }}>{count}</div>
+                <div className="text-xs mt-1" style={{ color: "#52525b", fontFamily: "Figtree, sans-serif" }}>buyers</div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
       {/* Charts row */}
-      <div className="grid md:grid-cols-2 gap-4 animate-fade-up delay-2">
+      <div className="grid md:grid-cols-2 gap-4 animate-fade-up delay-3">
         {/* Disposition pie */}
         <div className="rounded-xl p-5" style={{ background: "#111113", border: "1px solid #27272a" }}>
           <h2 className="font-bold mb-1" style={{ fontFamily: "Syne, sans-serif", color: "#fafafa" }}>Disposition Split</h2>
@@ -154,7 +184,7 @@ export default function DashboardPage() {
       </div>
 
       {/* Category bar */}
-      <div className="rounded-xl p-5 animate-fade-up delay-3" style={{ background: "#111113", border: "1px solid #27272a" }}>
+      <div className="rounded-xl p-5 animate-fade-up delay-4" style={{ background: "#111113", border: "1px solid #27272a" }}>
         <h2 className="font-bold mb-1" style={{ fontFamily: "Syne, sans-serif", color: "#fafafa" }}>Items by Category</h2>
         <p className="text-xs mb-4" style={{ color: "#52525b", fontFamily: "Figtree, sans-serif" }}>distribution across categories in pipeline</p>
         <ResponsiveContainer width="100%" height={180}>
@@ -168,7 +198,7 @@ export default function DashboardPage() {
       </div>
 
       {/* Flywheel */}
-      <div className="rounded-xl p-6 animate-fade-up delay-4" style={{ background: "#111113", border: "1px solid #27272a" }}>
+      <div className="rounded-xl p-6 animate-fade-up delay-5" style={{ background: "#111113", border: "1px solid #27272a" }}>
         <h2 className="font-bold mb-1" style={{ fontFamily: "Syne, sans-serif", color: "#fafafa" }}>The ReLoop Flywheel</h2>
         <p className="text-xs mb-6" style={{ color: "#52525b", fontFamily: "Figtree, sans-serif" }}>
           Prevention model trains on disposition outcomes — better predictions → fewer returns → more data → better model
@@ -206,7 +236,7 @@ export default function DashboardPage() {
 
       {/* Flagged listings */}
       {stats.flagged_listings.length > 0 && (
-        <div className="rounded-xl p-5 animate-fade-up delay-5" style={{ background: "rgba(245,158,11,0.04)", border: "1px solid rgba(245,158,11,0.2)" }}>
+        <div className="rounded-xl p-5 animate-fade-up delay-6" style={{ background: "rgba(245,158,11,0.04)", border: "1px solid rgba(245,158,11,0.2)" }}>
           <h2 className="font-bold mb-1" style={{ fontFamily: "Syne, sans-serif", color: "#f59e0b" }}>⚠️ Listing-Feedback Flags</h2>
           <p className="text-xs mb-3" style={{ color: "#52525b", fontFamily: "Figtree, sans-serif" }}>
             Products with multiple "not as described" returns — listing needs updating.
