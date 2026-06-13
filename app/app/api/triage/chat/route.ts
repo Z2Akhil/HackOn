@@ -114,15 +114,21 @@ async function callGemini(data: ChatRequest): Promise<string> {
 
   const genAI = new GoogleGenerativeAI(apiKey);
   const model = genAI.getGenerativeModel({
-    model: "gemini-2.0-flash",
+    model: process.env.GEMINI_MODEL || "gemini-2.5-flash-lite",
     systemInstruction: TRIAGE_SYSTEM_PROMPT,
   });
 
   // Build conversation history for Gemini
-  const history = data.history.map((entry) => ({
+  const mappedHistory = data.history.map((entry) => ({
     role: entry.role === "model" ? "model" : "user",
     parts: [{ text: entry.content }],
   }));
+
+  // Gemini requires the conversation history to begin with a "user" role.
+  // The opening agent greeting is a leading "model" message with no preceding
+  // user turn, so drop any leading "model" entries before starting the chat.
+  let firstUserIdx = mappedHistory.findIndex((h) => h.role === "user");
+  const history = firstUserIdx === -1 ? [] : mappedHistory.slice(firstUserIdx);
 
   // Determine the user message to send
   let userMessage: string;

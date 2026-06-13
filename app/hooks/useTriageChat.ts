@@ -11,6 +11,7 @@ interface UseTriageChatReturn {
   error: string | null;
   startSession: () => Promise<void>;
   sendMessage: (message: string) => Promise<void>;
+  sendVisionContext: (context: string) => Promise<void>;
   retry: () => Promise<void>;
 }
 
@@ -112,6 +113,44 @@ export function useTriageChat(): UseTriageChatReturn {
     }
   }, [messages]);
 
+  /**
+   * Send vision detection context to Gemini for proactive guidance.
+   * The context message is shown in chat as a system observation (role "user"
+   * prefixed with [Vision]) so Gemini can respond with guidance.
+   * The user sees only the agent's response.
+   */
+  const sendVisionContext = useCallback(async (context: string) => {
+    // Don't send if already loading or no context
+    if (isLoading || !context) return;
+
+    setIsLoading(true);
+    setError(null);
+
+    const currentHistory = [...messages];
+    // Add the vision context as a user message (Gemini needs user role)
+    const visionMessage = `[Vision system update] ${context}`;
+
+    const requestBody = {
+      history: currentHistory,
+      message: visionMessage,
+    };
+
+    try {
+      const { ok, data } = await postChat(requestBody);
+
+      if (ok && data.response) {
+        // Only show the agent's response in chat (not the vision context message)
+        const agentMessage: ChatMessage = { role: "model", content: data.response };
+        setMessages((prev) => [...prev, agentMessage]);
+      }
+      // Silently ignore errors for auto-guidance (don't clutter the UI)
+    } catch {
+      // Silently fail — auto-guidance is best-effort
+    } finally {
+      setIsLoading(false);
+    }
+  }, [messages, isLoading]);
+
   const retry = useCallback(async () => {
     const failedReq = lastFailedRequest.current;
     if (!failedReq) return;
@@ -166,5 +205,5 @@ export function useTriageChat(): UseTriageChatReturn {
     }
   }, []);
 
-  return { messages, isLoading, error, startSession, sendMessage, retry };
+  return { messages, isLoading, error, startSession, sendMessage, sendVisionContext, retry };
 }

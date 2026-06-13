@@ -4,21 +4,26 @@ import { useState, useCallback, useRef, useEffect } from "react";
 import VideoFeed from "./VideoFeed";
 import ChatPanel from "./ChatPanel";
 import TTSToggle from "./TTSToggle";
+import ConditionReportPanel from "./ConditionReportPanel";
+import InspectionChecklist, { INSPECTION_STEPS, InspectionStep } from "./InspectionChecklist";
 import { useFrameStreamer, DetectionPayload } from "../hooks/useFrameStreamer";
 import { useBoundingBoxRenderer } from "../hooks/useBoundingBoxRenderer";
 import { useTriageChat } from "../hooks/useTriageChat";
 import { useTTS } from "../hooks/useTTS";
+import { useConditionAssessment } from "../hooks/useConditionAssessment";
 
 export type SessionStatus = "idle" | "initializing" | "active" | "degraded";
 
 interface SessionControls {
   status: SessionStatus;
   error: string | null;
+  isAssessing: boolean;
   onStart: () => void;
   onEnd: () => void;
+  onAssess: () => void;
 }
 
-function SessionControlsPanel({ status, error, onStart, onEnd }: SessionControls) {
+function SessionControlsPanel({ status, error, isAssessing, onStart, onEnd, onAssess }: SessionControls) {
   return (
     <div className="session-controls">
       {error && (
@@ -44,13 +49,23 @@ function SessionControlsPanel({ status, error, onStart, onEnd }: SessionControls
       )}
 
       {(status === "active" || status === "degraded") && (
-        <button
-          className="btn-end"
-          onClick={onEnd}
-          aria-label="End Session"
-        >
-          End Session
-        </button>
+        <>
+          <button
+            className="btn-assess"
+            onClick={onAssess}
+            disabled={isAssessing}
+            aria-label="Assess Condition"
+          >
+            {isAssessing ? "Assessing…" : "Assess Condition"}
+          </button>
+          <button
+            className="btn-end"
+            onClick={onEnd}
+            aria-label="End Session"
+          >
+            End Session
+          </button>
+        </>
       )}
     </div>
   );
@@ -75,9 +90,35 @@ export default function TriageRoom() {
   // Hooks
   const triageChat = useTriageChat();
   const tts = useTTS();
+  const assessment = useConditionAssessment();
+
+  // Guided inspection checklist state
+  const [checklistSteps, setChecklistSteps] = useState<InspectionStep[]>(
+    INSPECTION_STEPS.map((s) => ({ ...s, completed: false }))
+  );
+  const [currentStepIndex, setCurrentStepIndex] = useState(0);
+
+  // Rolling buffer of sampled frames (Base64 JPEG, no data: prefix) captured
+  // during the session for multi-angle condition assessment.
+  const frameBufferRef = useRef<string[]>([]);
+  const MAX_BUFFERED_FRAMES = 6;
 
   // Track previous message count so we can detect new agent messages for TTS
   const prevMessageCountRef = useRef(0);
+
+  // Capture a single frame from the video element as Base64 JPEG (no prefix).
+  const captureFrame = useCallback((): string | null => {
+    const video = videoRef.current;
+    if (!video || video.readyState < 2 || video.videoWidth === 0) return null;
+    const canvas = document.createElement("canvas");
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return null;
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    const dataUrl = canvas.toDataURL("image/jpeg", 0.7);
+    return dataUrl.replace(/^data:image\/jpeg;base64,/, "");
+  }, []);
 
   // Frame streamer hook — activated when isActive is true
   useFrameStreamer({
@@ -115,6 +156,85 @@ export default function TriageRoom() {
     }
     prevMessageCountRef.current = messages.length;
   }, [triageChat.messages, tts]);
+
+  // Auto-guidance: periodically send vision context to Gemini so it can
+  // proactively guide the user without them typing anything.
+  const lastDetectionRef = useRef<DetectionPayload | null>(null);
+  useEffect(() => {
+    lastDetectionRef.current = detectionPayload;
+  }, [detectionPayload]);
+
+  // Keep a stable ref to the chat hook so the interval effect doesn't reset
+  // on every render (detections update state ~10fps, causing constant renders).
+  const triageChatRef = useRef(triageChat);
+  useEffect(() => {
+    triageChatRef.current = triageChat;
+  }, [triageChat]);
+
+  useEffect(() => {
+    if (status !== "active") return;
+
+    const AUTO_GUIDE_INTERVAL_MS = 10000; // every 10 seconds
+
+    const interval = setInterval(() => {
+      const chat = triageChatRef.current;
+      if (chat.isLoading) return; // don't overlap with pending requests
+
+      // If all checklist steps are complete, don't send more guidance
+      const stepIdx = currentStepIndex;
+      const steps = checklistSteps;
+      if (stepIdx >= steps.length) return;
+
+      const currentStep = steps[stepIdx];
+      const payload = lastDetectionRef.current;
+
+      // Build context with the current checklist instruction
+      let context: string;
+      if (!payload || payload.detections.length === 0) {
+        context = `[Inspection step ${stepIdx + 1}/${steps.length}: ${currentStep.label}] ` +
+          `I don't see any item in the frame yet. Ask the user: "${currentStep.instruction}"`;
+      } else {
+        const items = payload.detections
+          .map((d) => `${d.label} (${(d.confidence * 100).toFixed(0)}%)`)
+          .join(", ");
+        context = `[Inspection step ${stepIdx + 1}/${steps.length}: ${currentStep.label}] ` +
+          `I can see: ${items}. The current inspection step is "${currentStep.label}". ` +
+          `Give a short instruction: "${currentStep.instruction}" or acknowledge if they've already done it and move to the next step.`;
+      }
+
+      chat.sendVisionContext(context);
+
+      // Auto-advance the checklist step after each guidance round
+      // (the user is being guided through each step sequentially)
+      setChecklistSteps((prev) =>
+        prev.map((s, i) => (i === stepIdx ? { ...s, completed: true } : s))
+      );
+      setCurrentStepIndex((prev) => Math.min(prev + 1, steps.length));
+    }, AUTO_GUIDE_INTERVAL_MS);
+
+    return () => clearInterval(interval);
+  }, [status, currentStepIndex, checklistSteps]);
+
+  // Frame sampling: every 2 seconds during an active session, capture a frame
+  // into a rolling buffer (keeping the most recent MAX_BUFFERED_FRAMES) so we
+  // have multiple angles of the product for the final condition assessment.
+  useEffect(() => {
+    if (status !== "active") return;
+
+    const SAMPLE_INTERVAL_MS = 2000;
+
+    const interval = setInterval(() => {
+      const frame = captureFrame();
+      if (!frame) return;
+      const buf = frameBufferRef.current;
+      buf.push(frame);
+      if (buf.length > MAX_BUFFERED_FRAMES) {
+        buf.shift(); // drop the oldest frame
+      }
+    }, SAMPLE_INTERVAL_MS);
+
+    return () => clearInterval(interval);
+  }, [status, captureFrame]);
 
   // Callbacks for VideoFeed stream events
   const handleStreamReady = useCallback((stream: MediaStream) => {
@@ -154,6 +274,11 @@ export default function TriageRoom() {
   const handleStart = useCallback(async () => {
     setError(null);
     setStatus("initializing");
+    frameBufferRef.current = []; // reset captured frames for the new session
+    assessment.reset();
+    // Reset inspection checklist
+    setChecklistSteps(INSPECTION_STEPS.map((s) => ({ ...s, completed: false })));
+    setCurrentStepIndex(0);
 
     // Step 1: Acquire camera — set isActive to true and wait for the stream
     const cameraPromise = new Promise<MediaStream>((resolve, reject) => {
@@ -219,11 +344,33 @@ export default function TriageRoom() {
     tts.stop();
   }, [tts]);
 
+  /**
+   * Assess Condition: capture one final frame, then send all buffered frames
+   * plus the chat history to Gemini Vision for a consolidated condition report.
+   */
+  const handleAssess = useCallback(async () => {
+    // Grab one more current frame so we always have the latest angle
+    const latest = captureFrame();
+    const frames = [...frameBufferRef.current];
+    if (latest) frames.push(latest);
+
+    // De-duplicate accidental identical consecutive frames and cap the count
+    const unique = frames.filter((f, i) => i === 0 || f !== frames[i - 1]);
+    await assessment.assess(unique.slice(-6), triageChat.messages);
+  }, [captureFrame, assessment, triageChat.messages]);
+
   return (
     <div className="triage-room">
       <div className="triage-room__layout">
         {/* Left panel: Video feed area */}
         <div className="triage-room__video-panel">
+          {(status === "active" || status === "degraded") && (
+            <InspectionChecklist
+              steps={checklistSteps}
+              currentStepIndex={currentStepIndex}
+            />
+          )}
+
           <VideoFeed
             isActive={isActive}
             onStreamReady={handleStreamReady}
@@ -258,14 +405,21 @@ export default function TriageRoom() {
             onSendMessage={triageChat.sendMessage}
             onRetry={triageChat.retry}
           />
+          <ConditionReportPanel
+            report={assessment.report}
+            isAssessing={assessment.isAssessing}
+            error={assessment.error}
+          />
         </div>
       </div>
 
       <SessionControlsPanel
         status={status}
         error={error}
+        isAssessing={assessment.isAssessing}
         onStart={handleStart}
         onEnd={handleEnd}
+        onAssess={handleAssess}
       />
     </div>
   );

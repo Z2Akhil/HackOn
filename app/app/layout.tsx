@@ -1,3 +1,5 @@
+import "./globals.css";
+
 export const metadata = {
   title: "ReLoop",
   description: "AI-powered returns management",

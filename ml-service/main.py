@@ -199,6 +199,16 @@ def health():
 
 MAX_FRAME_SIZE = 5 * 1024 * 1024  # 5 MB encoded limit
 
+# Comma-separated COCO class labels to exclude from detections (default: "person").
+# The default COCO yolov8n model detects the user (person) constantly; excluding it
+# keeps the overlay focused on the product being inspected. Set EXCLUDED_CLASSES=""
+# to disable filtering, or to a custom list (e.g. "person,chair").
+EXCLUDED_CLASSES = {
+    c.strip().lower()
+    for c in os.environ.get("EXCLUDED_CLASSES", "person").split(",")
+    if c.strip()
+}
+
 
 @app.websocket("/vision-stream")
 async def vision_stream(websocket: WebSocket):
@@ -307,6 +317,11 @@ async def vision_stream(websocket: WebSocket):
                             label = result.names.get(class_id, str(class_id))
                             # Truncate label to max 64 characters
                             label = label[:64]
+
+                            # Skip excluded classes (e.g. "person") so the overlay
+                            # focuses on the product being inspected.
+                            if label.lower() in EXCLUDED_CLASSES:
+                                continue
 
                             detections.append({
                                 "bbox": [x1, y1, x2, y2],
