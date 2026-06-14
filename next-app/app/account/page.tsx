@@ -31,18 +31,35 @@ const DEFAULT_PROFILE = {
 
 type Profile = typeof DEFAULT_PROFILE;
 
+// Credits from pre-seeded listings (Bombay Dyeing + Nike)
+const PRESEED_CREDITS = 56 + 143;
+
+function computeTotalCredits(): number {
+  try {
+    const raw = JSON.parse(localStorage.getItem("reloop_my_listings") ?? "[]") as Array<{ green_credits?: number }>;
+    const fromStorage = raw.reduce((sum, l) => sum + (l.green_credits ?? 0), 0);
+    return PRESEED_CREDITS + fromStorage;
+  } catch { return PRESEED_CREDITS; }
+}
+
 export default function AccountPage() {
   const [profile, setProfile] = useState<Profile>(DEFAULT_PROFILE);
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState<Profile>(DEFAULT_PROFILE);
   const [saved, setSaved] = useState(false);
   const [returningOrder, setReturningOrder] = useState<typeof DEMO_ORDERS[0] | null>(null);
+  const [totalCredits, setTotalCredits] = useState(PRESEED_CREDITS);
 
   useEffect(() => {
     try {
       const stored = localStorage.getItem("reloop_profile");
       if (stored) { const p = JSON.parse(stored); setProfile(p); setDraft(p); }
     } catch {}
+    setTotalCredits(computeTotalCredits());
+
+    function onStorage() { setTotalCredits(computeTotalCredits()); }
+    window.addEventListener("storage", onStorage);
+    return () => window.removeEventListener("storage", onStorage);
   }, []);
 
   function openEdit() { setDraft({ ...profile }); setEditing(true); setSaved(false); }
@@ -84,7 +101,7 @@ export default function AccountPage() {
             </p>
             <div className="flex flex-wrap gap-2 mt-3">
               <span className="text-xs px-2 py-1 rounded-lg font-semibold" style={{ background: "rgba(16,185,129,0.08)", border: "1px solid rgba(16,185,129,0.2)", color: "#10b981", fontFamily: "Figtree, sans-serif" }}>
-                🌿 240 Green Credits
+                🌿 {totalCredits} Green Credits
               </span>
               <span className="text-xs px-2 py-1 rounded-lg font-semibold" style={{ background: "#18181b", border: "1px solid #27272a", color: "#52525b", fontFamily: "Figtree, sans-serif" }}>
                 📍 {profile.location}

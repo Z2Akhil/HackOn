@@ -1,6 +1,7 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { MarketplaceListing } from "@/types";
+import { getVideo } from "@/lib/video-store";
 
 const CDN = "https://cdn.dummyjson.com/product-images";
 
@@ -16,6 +17,9 @@ const CATEGORY_INSPECTION_PHOTOS: Record<string, string[]> = {
 };
 
 function getInspectionPhotos(listing: MarketplaceListing): string[] {
+  if (listing.inspection_images && listing.inspection_images.length > 0) {
+    return listing.inspection_images.filter(Boolean).slice(0, 3);
+  }
   const secondary = CATEGORY_INSPECTION_PHOTOS[listing.category] ?? [];
   return [listing.image, ...secondary].filter(Boolean).slice(0, 3);
 }
@@ -48,9 +52,19 @@ function CircularityBar({ score }: { score: number }) {
 export default function PassportModal({ listing, onClose, hideBuyButton }: { listing: MarketplaceListing; onClose: () => void; hideBuyButton?: boolean }) {
   const [lightboxImg, setLightboxImg] = useState<string | null>(null);
   const [videoPlaying, setVideoPlaying] = useState(false);
+  const [userVideoUrl, setUserVideoUrl] = useState<string | null>(null);
   const cfg = GRADE_CONFIG[listing.grade.grade] ?? GRADE_CONFIG["B+"];
   const discount = Math.round((1 - listing.asking_price / listing.mrp) * 100);
   const inspectionPhotos = getInspectionPhotos(listing);
+
+  useEffect(() => {
+    if (!hideBuyButton || !listing.id.startsWith("ul_")) return;
+    getVideo(listing.id).then((file) => {
+      if (file) setUserVideoUrl(URL.createObjectURL(file));
+    }).catch(() => {});
+    return () => { if (userVideoUrl) URL.revokeObjectURL(userVideoUrl); };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [listing.id, hideBuyButton]);
 
   return (
     <div
@@ -101,72 +115,96 @@ export default function PassportModal({ listing, onClose, hideBuyButton }: { lis
 
         <div className="p-6 space-y-5">
 
-          {/* Photo gallery */}
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-widest mb-2" style={{ color: "#52525b", fontFamily: "Figtree, sans-serif" }}>
-              Inspection Photos · AI Captured
-            </p>
-            <div className="grid grid-cols-3 gap-2">
-              {inspectionPhotos.map((src, i) => (
-                <button
-                  key={i}
-                  onClick={() => setLightboxImg(src)}
-                  className="relative aspect-square rounded-xl overflow-hidden group transition-all hover:ring-2"
-                  style={{ background: "#18181b", ringColor: "#10b981" } as React.CSSProperties}
-                >
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={src} alt={`Inspection ${i + 1}`} className="w-full h-full object-cover" />
-                  <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity" style={{ background: "rgba(0,0,0,0.5)" }}>
-                    <span className="text-white text-lg">🔍</span>
-                  </div>
-                  {i === 0 && (
-                    <div className="absolute bottom-1 left-1 text-xs px-1.5 py-0.5 rounded font-semibold" style={{ background: "rgba(16,185,129,0.9)", color: "#0c0c0e", fontFamily: "Figtree, sans-serif" }}>
-                      Main
+          {/* Photo gallery — seller view: only real inspection images; public: fallback to category photos */}
+          {(hideBuyButton ? (listing.inspection_images && listing.inspection_images.length > 0) : inspectionPhotos.length > 0) && (
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-widest mb-2" style={{ color: "#52525b", fontFamily: "Figtree, sans-serif" }}>
+                {hideBuyButton ? "Your Inspection Photos" : "Inspection Photos · AI Captured"}
+              </p>
+              <div className="grid grid-cols-3 gap-2">
+                {inspectionPhotos.map((src, i) => (
+                  <button
+                    key={i}
+                    onClick={() => setLightboxImg(src)}
+                    className="relative aspect-square rounded-xl overflow-hidden group transition-all hover:ring-2"
+                    style={{ background: "#18181b", ringColor: "#10b981" } as React.CSSProperties}
+                  >
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={src} alt={`Inspection ${i + 1}`} className="w-full h-full object-cover" />
+                    <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity" style={{ background: "rgba(0,0,0,0.5)" }}>
+                      <span className="text-white text-lg">🔍</span>
                     </div>
-                  )}
-                </button>
-              ))}
+                    {i === 0 && (
+                      <div className="absolute bottom-1 left-1 text-xs px-1.5 py-0.5 rounded font-semibold" style={{ background: "rgba(16,185,129,0.9)", color: "#0c0c0e", fontFamily: "Figtree, sans-serif" }}>
+                        Main
+                      </div>
+                    )}
+                  </button>
+                ))}
+              </div>
             </div>
-          </div>
+          )}
 
-          {/* Video inspection */}
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-widest mb-2" style={{ color: "#52525b", fontFamily: "Figtree, sans-serif" }}>
-              360° Inspection Video
-            </p>
-            {videoPlaying ? (
+          {/* Seller view: show real video from IndexedDB if uploaded */}
+          {hideBuyButton && userVideoUrl && (
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-widest mb-2" style={{ color: "#52525b", fontFamily: "Figtree, sans-serif" }}>
+                Your Inspection Video
+              </p>
               <div className="relative rounded-xl overflow-hidden" style={{ background: "#18181b", border: "1px solid #27272a" }}>
                 <video
                   className="w-full rounded-xl"
                   controls
-                  autoPlay
+                  src={userVideoUrl}
                   style={{ maxHeight: 220 }}
-                  onError={() => setVideoPlaying(false)}
-                >
-                  <source src="https://www.w3schools.com/html/mov_bbb.mp4" type="video/mp4" />
-                </video>
+                />
                 <div className="absolute top-2 right-2 text-xs px-2 py-0.5 rounded font-semibold" style={{ background: "rgba(16,185,129,0.9)", color: "#0c0c0e", fontFamily: "Figtree, sans-serif" }}>
-                  AI Recorded
+                  Uploaded
                 </div>
               </div>
-            ) : (
-              <button
-                onClick={() => setVideoPlaying(true)}
-                className="relative w-full rounded-xl overflow-hidden group transition-all"
-                style={{ background: "#18181b", border: "1px solid #27272a" }}
-              >
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={listing.image} alt="Video thumbnail" className="w-full object-cover" style={{ height: 160, filter: "brightness(0.5)" }} />
-                <div className="absolute inset-0 flex flex-col items-center justify-center gap-2">
-                  <div className="w-12 h-12 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform" style={{ background: "rgba(16,185,129,0.9)" }}>
-                    <span className="text-xl pl-0.5">▶</span>
+            </div>
+          )}
+
+          {/* Public marketplace view: demo video */}
+          {!hideBuyButton && (
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-widest mb-2" style={{ color: "#52525b", fontFamily: "Figtree, sans-serif" }}>
+                360° Inspection Video
+              </p>
+              {videoPlaying ? (
+                <div className="relative rounded-xl overflow-hidden" style={{ background: "#18181b", border: "1px solid #27272a" }}>
+                  <video
+                    className="w-full rounded-xl"
+                    controls
+                    autoPlay
+                    style={{ maxHeight: 220 }}
+                    onError={() => setVideoPlaying(false)}
+                  >
+                    <source src="https://www.w3schools.com/html/mov_bbb.mp4" type="video/mp4" />
+                  </video>
+                  <div className="absolute top-2 right-2 text-xs px-2 py-0.5 rounded font-semibold" style={{ background: "rgba(16,185,129,0.9)", color: "#0c0c0e", fontFamily: "Figtree, sans-serif" }}>
+                    AI Recorded
                   </div>
-                  <p className="text-xs font-semibold" style={{ color: "#fafafa", fontFamily: "Figtree, sans-serif" }}>Play Inspection Video</p>
-                  <p className="text-xs" style={{ color: "#71717a", fontFamily: "Figtree, sans-serif" }}>Recorded at return · 0:45</p>
                 </div>
-              </button>
-            )}
-          </div>
+              ) : (
+                <button
+                  onClick={() => setVideoPlaying(true)}
+                  className="relative w-full rounded-xl overflow-hidden group transition-all"
+                  style={{ background: "#18181b", border: "1px solid #27272a" }}
+                >
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={listing.image} alt="Video thumbnail" className="w-full object-cover" style={{ height: 160, filter: "brightness(0.5)" }} />
+                  <div className="absolute inset-0 flex flex-col items-center justify-center gap-2">
+                    <div className="w-12 h-12 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform" style={{ background: "rgba(16,185,129,0.9)" }}>
+                      <span className="text-xl pl-0.5">▶</span>
+                    </div>
+                    <p className="text-xs font-semibold" style={{ color: "#fafafa", fontFamily: "Figtree, sans-serif" }}>Play Inspection Video</p>
+                    <p className="text-xs" style={{ color: "#71717a", fontFamily: "Figtree, sans-serif" }}>Recorded at return · 0:45</p>
+                  </div>
+                </button>
+              )}
+            </div>
+          )}
 
           {/* Grade block */}
           <div className="rounded-xl p-4" style={{ background: cfg.bg, border: `1px solid ${cfg.border}` }}>

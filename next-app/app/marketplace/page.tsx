@@ -56,16 +56,41 @@ export default function MarketplacePage() {
     fetch("/api/buyers").then((r) => r.json()).then(setBuyers).catch(() => setBuyers([]));
   }, []);
 
+  function mergeUserListings(apiListings: MarketplaceListing[]): MarketplaceListing[] {
+    try {
+      const raw = JSON.parse(localStorage.getItem("reloop_my_listings") ?? "[]") as MarketplaceListing[];
+      // Only resell/refurbish decisions are publicly listed
+      const userListings = raw.filter((l) => ["resell", "refurbish"].includes(l.decision));
+      if (userListings.length === 0) return apiListings;
+      // Remove API listings whose product_id is overridden by a user listing
+      const userProductIds = new Set(userListings.map((l) => l.product_id));
+      const base = apiListings.filter((l) => !userProductIds.has(l.product_id));
+      // User listings go first
+      return [...userListings, ...base];
+    } catch { return apiListings; }
+  }
+
   // (Re)load listings whenever the active buyer changes.
   useEffect(() => {
     setLoading(true);
     const url = activeBuyerId ? `/api/personalized?buyerId=${activeBuyerId}` : "/api/personalized";
     fetch(url)
       .then((r) => r.json())
-      .then((d) => setListings(d.listings ?? []))
+      .then((d) => setListings(mergeUserListings(d.listings ?? [])))
       .catch(() => setListings([]))
       .finally(() => setLoading(false));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeBuyerId]);
+
+  // Re-merge when user lists a new item (storage event from ReturnModal)
+  useEffect(() => {
+    function onStorage() {
+      setListings((prev) => mergeUserListings(prev));
+    }
+    window.addEventListener("storage", onStorage);
+    return () => window.removeEventListener("storage", onStorage);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const activeBuyer = buyers.find((b) => b.id === activeBuyerId) ?? null;
   const filtered = applyFilter(listings, activeFilter);

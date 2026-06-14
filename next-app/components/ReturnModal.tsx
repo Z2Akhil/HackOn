@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { GradeResult, DispositionResult } from "@/types";
 import GradeCard from "@/components/GradeCard";
 import DispositionCard from "@/components/DispositionCard";
+import { storeVideo } from "@/lib/video-store";
 
 const CDN = "https://cdn.dummyjson.com/product-images";
 export const DEMO_ORDERS = [
@@ -49,17 +50,17 @@ const DECISION_CONFIG = {
     icon: "🏷️", color: "#10b981", bg: "rgba(16,185,129,0.08)", border: "rgba(16,185,129,0.2)",
     title: "Listed on Marketplace",
     badge: (d: DispositionResult) => `+${d.green_credits ?? 50} Green Credits earned`,
-    body: (d: DispositionResult) => `Your item has been graded and is now live as an open-box listing. You'll receive ₹${d.estimated_recovery?.toLocaleString("en-IN")} once it sells.`,
+    body: (d: DispositionResult) => `Your item is now live on the ReLoop marketplace as an AI-certified open-box listing. It has also been saved to your My Listings page. You'll receive ₹${d.estimated_recovery?.toLocaleString("en-IN")} once a buyer is matched and the sale completes.`,
     meta: (d: DispositionResult) => [`₹${d.estimated_recovery?.toLocaleString("en-IN")} recovery`, `${d.co2_saved_kg} kg CO₂ saved`, `Circularity ${d.circularity_score}/100`],
-    cta: "View Listing on Marketplace →", ctaHref: "/marketplace",
+    cta: "View in My Listings →", ctaHref: "/my-listings",
   },
   refurbish: {
     icon: "🔧", color: "#3b82f6", bg: "rgba(59,130,246,0.08)", border: "rgba(59,130,246,0.2)",
-    title: "Sent to Refurb Queue",
+    title: "Sent for Refurbishment",
     badge: () => "Est. ready in 5–7 days",
-    body: (d: DispositionResult) => `Our technicians will repair and certify this item. It will be relisted as 'Certified Refurbished', recovering ₹${d.estimated_recovery?.toLocaleString("en-IN")}.`,
+    body: (d: DispositionResult) => `Your item has been queued for professional repair and quality certification. Once certified, it will be listed on the marketplace as 'Certified Refurbished' and appear in your My Listings page. Estimated recovery: ₹${d.estimated_recovery?.toLocaleString("en-IN")}.`,
     meta: (d: DispositionResult) => [`₹${d.estimated_recovery?.toLocaleString("en-IN")} est. recovery`, `${d.co2_saved_kg} kg CO₂ saved`, "Certified before resale"],
-    cta: "Track in Ops Dashboard →", ctaHref: "/dashboard",
+    cta: "View in My Listings →", ctaHref: "/my-listings",
   },
   donate: {
     icon: "🤝", color: "#8b5cf6", bg: "rgba(139,92,246,0.08)", border: "rgba(139,92,246,0.2)",
@@ -67,7 +68,7 @@ const DECISION_CONFIG = {
     badge: () => "Tax receipt incoming",
     body: () => "Pickup arranged with NGO partner GreenMitra Foundation within 2–3 days. A tax exemption receipt will be emailed to your registered address.",
     meta: (d: DispositionResult) => [`${d.co2_saved_kg} kg CO₂ saved`, `Circularity ${d.circularity_score}/100`, "1 product → 2nd life"],
-    cta: "View Sustainability Impact →", ctaHref: "/dashboard",
+    cta: "Done", ctaHref: null,
   },
   recycle: {
     icon: "♻️", color: "#14b8a6", bg: "rgba(20,184,166,0.08)", border: "rgba(20,184,166,0.2)",
@@ -75,7 +76,7 @@ const DECISION_CONFIG = {
     badge: (d: DispositionResult) => `${d.co2_saved_kg} kg CO₂ prevented`,
     body: () => "Material recovery team will collect within 3–5 days. All hazardous components safely processed per e-waste norms. Raw materials re-enter manufacturing supply chain.",
     meta: (d: DispositionResult) => [`${d.co2_saved_kg} kg CO₂ saved`, "Zero landfill", `Circularity ${d.circularity_score}/100`],
-    cta: "View Sustainability Metrics →", ctaHref: "/dashboard",
+    cta: "Done", ctaHref: null,
   },
   exchange: {
     icon: "🔄", color: "#f59e0b", bg: "rgba(245,158,11,0.08)", border: "rgba(245,158,11,0.2)",
@@ -87,10 +88,26 @@ const DECISION_CONFIG = {
   },
 } as const;
 
-function NextStepPanel({ disposition, otpCode, onClose }: { disposition: DispositionResult; otpCode: string; onClose: () => void }) {
+function NextStepPanel({
+  disposition, otpCode, onClose, onList,
+}: {
+  disposition: DispositionResult;
+  otpCode: string;
+  onClose: () => void;
+  onList?: () => Promise<void>;
+}) {
   const router = useRouter();
+  const [listState, setListState] = useState<"idle" | "saving" | "done">("idle");
   const key = (disposition.decision ?? "resell") as keyof typeof DECISION_CONFIG;
   const cfg = DECISION_CONFIG[key] ?? DECISION_CONFIG.resell;
+  const isListable = ["resell", "refurbish"].includes(disposition.decision);
+
+  async function handleList() {
+    if (!onList || listState !== "idle") return;
+    setListState("saving");
+    await onList();
+    setListState("done");
+  }
 
   return (
     <div className="rounded-2xl overflow-hidden" style={{ border: `1px solid ${cfg.border}` }}>
@@ -121,17 +138,110 @@ function NextStepPanel({ disposition, otpCode, onClose }: { disposition: Disposi
           ))}
         </div>
 
-        {/* CTA */}
-        <button
-          onClick={() => { onClose(); if (cfg.ctaHref) router.push(cfg.ctaHref); }}
-          className="w-full font-semibold py-3 rounded-xl transition-all hover:opacity-90 active:scale-[0.98]"
-          style={{ background: cfg.color, color: "#0c0c0e", fontFamily: "Figtree, sans-serif" }}
-        >
-          {cfg.cta}
-        </button>
+        {/* List on Marketplace button — only for resell/refurbish, before listing */}
+        {isListable && listState !== "done" && (
+          <button
+            onClick={handleList}
+            disabled={listState === "saving"}
+            className="w-full font-semibold py-3 rounded-xl transition-all hover:opacity-90 active:scale-[0.98] disabled:opacity-60"
+            style={{ background: cfg.color, color: "#0c0c0e", fontFamily: "Figtree, sans-serif" }}
+          >
+            {listState === "saving" ? "Listing…" : "List on Marketplace →"}
+          </button>
+        )}
+
+        {/* Listed confirmation */}
+        {isListable && listState === "done" && (
+          <div className="rounded-xl p-3 space-y-2" style={{ background: "rgba(16,185,129,0.08)", border: "1px solid rgba(16,185,129,0.2)" }}>
+            <p className="text-xs font-semibold" style={{ color: "#10b981", fontFamily: "Figtree, sans-serif" }}>
+              ✓ Listed on Marketplace · Added to My Listings
+            </p>
+            <p className="text-xs" style={{ color: "#52525b", fontFamily: "Figtree, sans-serif" }}>
+              Your inspection photos are now public. Buyers are being matched.
+            </p>
+            <button
+              onClick={() => { onClose(); router.push("/my-listings"); }}
+              className="text-xs font-semibold underline"
+              style={{ color: "#10b981", fontFamily: "Figtree, sans-serif" }}
+            >
+              View in My Listings →
+            </button>
+          </div>
+        )}
+
+        {/* Non-listable decisions: just Done */}
+        {!isListable && (
+          <button
+            onClick={() => { onClose(); if (cfg.ctaHref) router.push(cfg.ctaHref); }}
+            className="w-full font-semibold py-3 rounded-xl transition-all hover:opacity-90 active:scale-[0.98]"
+            style={{ background: cfg.color, color: "#0c0c0e", fontFamily: "Figtree, sans-serif" }}
+          >
+            {cfg.cta}
+          </button>
+        )}
       </div>
     </div>
   );
+}
+
+async function compressToBase64(file: File, maxWidth = 600, quality = 0.65): Promise<string> {
+  return new Promise((resolve) => {
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload = () => {
+      const ratio = Math.min(maxWidth / img.width, 1);
+      const canvas = document.createElement("canvas");
+      canvas.width = Math.round(img.width * ratio);
+      canvas.height = Math.round(img.height * ratio);
+      canvas.getContext("2d")!.drawImage(img, 0, 0, canvas.width, canvas.height);
+      URL.revokeObjectURL(url);
+      resolve(canvas.toDataURL("image/jpeg", quality));
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); resolve(""); };
+    img.src = url;
+  });
+}
+
+async function saveListingToStorage(
+  order: Order,
+  grade: GradeResult,
+  disposition: DispositionResult,
+  frameFiles: File[]
+): Promise<string> {
+  const listingId = `ul_${order.id}_${Date.now()}`;
+  try {
+    const inspection_images = (
+      await Promise.all(frameFiles.slice(0, 3).map((f) => compressToBase64(f)))
+    ).filter(Boolean);
+
+    const listing = {
+      id: listingId,
+      product_id: order.product_id,
+      product_name: order.product_name,
+      category: order.category,
+      mrp: order.mrp,
+      asking_price: Math.max(1, Math.round(disposition.estimated_recovery)),
+      grade,
+      decision: disposition.decision,
+      listed_at: new Date().toISOString(),
+      image: inspection_images[0] ?? "",
+      circularity_score: disposition.circularity_score,
+      co2_saved_kg: disposition.co2_saved_kg,
+      expected_lifespan_years: 3,
+      warranty_months: 0,
+      inspection_images,
+      green_credits: disposition.green_credits ?? 50,
+    };
+
+    const existing = JSON.parse(localStorage.getItem("reloop_my_listings") ?? "[]");
+    const deduped = existing.filter((l: { product_id: string }) => l.product_id !== order.product_id);
+    deduped.unshift(listing);
+    localStorage.setItem("reloop_my_listings", JSON.stringify(deduped));
+    window.dispatchEvent(new Event("storage"));
+  } catch (e) {
+    console.error("[listing] Failed to save:", e);
+  }
+  return listingId;
 }
 
 async function extractVideoFrames(file: File): Promise<File[]> {
@@ -191,6 +301,12 @@ export default function ReturnModal({ order, onClose }: { order: Order; onClose:
   const [loading, setLoading] = useState(false);
   const [fileError, setFileError] = useState("");
   const [otpCode] = useState(() => Math.floor(100000 + Math.random() * 900000).toString());
+  const [pendingListing, setPendingListing] = useState<{
+    grade: GradeResult;
+    disposition: DispositionResult;
+    frameFiles: File[];
+    videoFile?: File;
+  } | null>(null);
   const isVideo = mediaFiles[0]?.type.startsWith("video/") ?? false;
   const hasFiles = mediaFiles.length > 0;
 
@@ -227,6 +343,7 @@ export default function ReturnModal({ order, onClose }: { order: Order; onClose:
     setLoading(true);
 
     let gradeData: GradeResult = MOCK_GRADE;
+    let filesForStorage: File[] = [];
     try {
       const fd = new FormData();
 
@@ -236,9 +353,11 @@ export default function ReturnModal({ order, onClose }: { order: Order; onClose:
         setStep("grading");
         if (frames.length > 0) {
           frames.forEach((f, i) => fd.append(`frame${i}`, f));
+          filesForStorage = frames;
         }
       } else {
         mediaFiles.forEach((f, i) => fd.append(`frame${i}`, f));
+        filesForStorage = mediaFiles;
         setStep("grading");
       }
 
@@ -260,6 +379,16 @@ export default function ReturnModal({ order, onClose }: { order: Order; onClose:
       if (res.ok) { const p = await res.json(); if (p?.decision) dispData = p; }
     } catch {}
     setDisposition(dispData);
+
+    if (["resell", "refurbish"].includes(dispData.decision) && filesForStorage.length > 0) {
+      setPendingListing({
+        grade: gradeData,
+        disposition: dispData,
+        frameFiles: filesForStorage,
+        videoFile: isVideo ? mediaFiles[0] : undefined,
+      });
+    }
+
     setLoading(false);
     setStep("result");
   }
@@ -446,7 +575,22 @@ export default function ReturnModal({ order, onClose }: { order: Order; onClose:
               </div>
               <GradeCard grade={grade} />
               <DispositionCard disposition={disposition} productName={order.product_name} mrp={order.mrp} />
-              <NextStepPanel disposition={disposition} otpCode={otpCode} onClose={onClose} />
+              <NextStepPanel
+                disposition={disposition}
+                otpCode={otpCode}
+                onClose={onClose}
+                onList={pendingListing ? async () => {
+                  const listingId = await saveListingToStorage(
+                    order,
+                    pendingListing.grade,
+                    pendingListing.disposition,
+                    pendingListing.frameFiles
+                  );
+                  if (pendingListing.videoFile) {
+                    try { await storeVideo(listingId, pendingListing.videoFile); } catch {}
+                  }
+                } : undefined}
+              />
             </div>
           )}
         </div>

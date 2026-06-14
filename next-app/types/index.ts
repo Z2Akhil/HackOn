@@ -76,4 +76,5 @@ export interface MarketplaceListing {
   co2_saved_kg: number;
   expected_lifespan_years: number;
   warranty_months: number;
+  inspection_images?: string[];
 }

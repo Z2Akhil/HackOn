@@ -7,20 +7,9 @@ const MOCK_GRADES: Record<string, GradeResult> = {
   damaged:  { grade: "B+", functional_risk: "medium", defects: ["cracked corner", "missing cable"],           packaging_status: "missing_box",     accessories_complete: false, confidence: 0.79 },
 };
 
-const GRADE_ORDER = ["A", "A-", "B+", "B", "C"];
-
-// Returns the worse of two grades (further right in GRADE_ORDER = worse)
-function worstGrade(a: GradeResult, b: GradeResult): GradeResult {
-  const ai = GRADE_ORDER.indexOf(a.grade);
-  const bi = GRADE_ORDER.indexOf(b.grade);
-  if (bi > ai) {
-    // b is worse — merge defects from both into b
-    return { ...b, defects: [...new Set([...a.defects, ...b.defects])] };
-  }
-  return { ...a, defects: [...new Set([...a.defects, ...b.defects])] };
-}
-
-const GRADE_PROMPT = `You are a product condition grader for an e-commerce returns system. Analyze this product image carefully and return ONLY valid JSON — no markdown, no explanation, just the raw JSON object.
+function gradePrompt(count: number): string {
+  const multi = count > 1;
+  return `You are a product condition grader for an e-commerce returns system. You are receiving ${multi ? `${count} photos of the SAME product taken from different angles` : "1 photo of a product"}. Analyze ${multi ? "ALL images together as a complete set" : "the image"} and return a single consolidated assessment. Return ONLY valid JSON — no markdown, no explanation, just the raw JSON object.
 
 Schema (use exactly these field names and value sets):
 {
@@ -33,38 +22,71 @@ Schema (use exactly these field names and value sets):
 }
 
 Grade scale:
-A  = Like new, no visible wear
-A- = Minor cosmetic issues (light scratches, scuffs)
+A  = Like new, no visible wear across all angles
+A- = Minor cosmetic issues (light scratches, scuffs) visible in any photo
 B+ = Moderate wear, fully functional
 B  = Heavy wear or minor functional issues
 C  = Poor condition or significant functional problems
 
-Accessories check:
-- Assess whether all expected components for this type of product appear to be present.
-- If any component is visibly absent or the set looks incomplete, set accessories_complete: false and list each missing item in defects.
-- Never assume a component is present if it is not clearly visible in the image.
+${multi ? `Multi-angle rules:
+- A defect visible in ANY of the photos must appear in defects[].
+- A component counts as missing if it is absent across ALL photos where it would be visible.
+- Assign the WORST grade seen across all angles — never average.
+- If photos show different angles revealing different defects, list every unique defect.
+- Set confidence higher when multiple angles agree; lower when photos are blurry or contradictory.
+
+` : ""}Accessories check:
+- Assess whether all expected components for this product type appear present.
+- If any component is visibly absent or the set looks incomplete, set accessories_complete: false and list each missing item in defects[].
+- Never assume a component is present if it is not clearly visible.
 
 Rules:
-- Be specific about defects (e.g. "cracked hinge", "deep scratches on surface", "missing component").
-- If the image is blurry or unclear, set confidence below 0.6.`;
+- Be specific about defects (e.g. "cracked hinge", "deep scratches on surface", "missing power cable").
+- If images are blurry or unclear, set confidence below 0.6.`;
+}
 
-async function callGroq(imageBase64: string, mimeType: string): Promise<GradeResult | null> {
+interface Frame { base64: string; mimeType: string; }
+
+async function callGeminiMulti(frames: Frame[]): Promise<GradeResult | null> {
+  const apiKey = process.env.GEMINI_API_KEY;
+  if (!apiKey) return null;
+
+  try {
+    const { GoogleGenerativeAI } = await import("@google/generative-ai");
+    const genAI = new GoogleGenerativeAI(apiKey);
+    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+
+    const content: Parameters<typeof model.generateContent>[0] = [
+      gradePrompt(frames.length),
+      ...frames.map(f => ({ inlineData: { data: f.base64, mimeType: f.mimeType as "image/jpeg" } })),
+    ];
+
+    const result = await model.generateContent(content);
+    const text = result.response.text().trim();
+    const json = text.replace(/^```[a-z]*\n?/, "").replace(/\n?```\s*$/, "").trim();
+    return JSON.parse(json) as GradeResult;
+  } catch (err) {
+    console.error("[grade] Gemini error:", err);
+    return null;
+  }
+}
+
+async function callGroqMulti(frames: Frame[]): Promise<GradeResult | null> {
   const apiKey = process.env.GROQ_API_KEY;
   if (!apiKey) return null;
 
   try {
+    const content: Array<{ type: string; text?: string; image_url?: { url: string } }> = [
+      { type: "text", text: gradePrompt(frames.length) },
+      ...frames.map(f => ({ type: "image_url", image_url: { url: `data:${f.mimeType};base64,${f.base64}` } })),
+    ];
+
     const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
       method: "POST",
       headers: { "Authorization": `Bearer ${apiKey}`, "Content-Type": "application/json" },
       body: JSON.stringify({
         model: "meta-llama/llama-4-scout-17b-16e-instruct",
-        messages: [{
-          role: "user",
-          content: [
-            { type: "text", text: GRADE_PROMPT },
-            { type: "image_url", image_url: { url: `data:${mimeType};base64,${imageBase64}` } },
-          ],
-        }],
+        messages: [{ role: "user", content }],
         temperature: 0,
         max_tokens: 512,
       }),
@@ -85,29 +107,6 @@ async function callGroq(imageBase64: string, mimeType: string): Promise<GradeRes
   }
 }
 
-async function callGemini(imageBase64: string, mimeType: string): Promise<GradeResult | null> {
-  const apiKey = process.env.GEMINI_API_KEY;
-  if (!apiKey) return null;
-
-  try {
-    const { GoogleGenerativeAI } = await import("@google/generative-ai");
-    const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
-
-    const result = await model.generateContent([
-      GRADE_PROMPT,
-      { inlineData: { data: imageBase64, mimeType: mimeType as any } },
-    ]);
-
-    const text = result.response.text().trim();
-    const json = text.replace(/^```[a-z]*\n?/, "").replace(/\n?```\s*$/, "").trim();
-    return JSON.parse(json) as GradeResult;
-  } catch (err) {
-    console.error("[grade] Gemini error:", err);
-    return null;
-  }
-}
-
 export async function POST(req: NextRequest) {
   try {
     const formData = await req.formData();
@@ -117,11 +116,10 @@ export async function POST(req: NextRequest) {
       return NextResponse.json(MOCK_GRADES[mockKey]);
     }
 
-    // Collect frames: single image OR up to 3 video frames
+    // Collect all frames
     const frameFiles: File[] = [];
     const single = formData.get("image") as File | null;
     if (single) frameFiles.push(single);
-
     for (let i = 0; i <= 2; i++) {
       const f = formData.get(`frame${i}`) as File | null;
       if (f) frameFiles.push(f);
@@ -131,34 +129,23 @@ export async function POST(req: NextRequest) {
       return NextResponse.json(MOCK_GRADES["default"]);
     }
 
-    // Analyze each frame in parallel — Gemini first, Groq fallback
-    const results = await Promise.all(
-      frameFiles.map(async (file) => {
-        try {
-          const bytes = await file.arrayBuffer();
-          const base64 = Buffer.from(bytes).toString("base64");
-          const mime = file.type || "image/jpeg";
-          return (await callGemini(base64, mime)) ?? (await callGroq(base64, mime));
-        } catch {
-          return null;
-        }
-      })
+    // Convert all frames to base64 in parallel
+    const frames: Frame[] = await Promise.all(
+      frameFiles.map(async (file) => ({
+        base64: Buffer.from(await file.arrayBuffer()).toString("base64"),
+        mimeType: file.type || "image/jpeg",
+      }))
     );
 
-    const valid = results.filter((r): r is GradeResult => r !== null && !!r.grade);
+    // Single AI call with ALL images — holistic multi-angle analysis
+    const result = (await callGeminiMulti(frames)) ?? (await callGroqMulti(frames));
 
-    if (valid.length === 0) {
+    if (!result || !result.grade) {
       return NextResponse.json({ ...MOCK_GRADES["default"], mock: true });
     }
 
-    // Aggregate: worst-case grade, union of all defects, average confidence
-    const aggregated = valid.reduce((acc, cur) => worstGrade(acc, cur));
-    aggregated.confidence = parseFloat(
-      (valid.reduce((s, r) => s + r.confidence, 0) / valid.length).toFixed(2)
-    );
-    aggregated.defects = [...new Set(aggregated.defects)];
-
-    return NextResponse.json(aggregated);
+    result.defects = [...new Set(result.defects)];
+    return NextResponse.json(result);
   } catch {
     return NextResponse.json({ ...MOCK_GRADES["default"], mock: true });
   }
