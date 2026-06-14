@@ -1,85 +1,79 @@
 import { getProducts } from "@/lib/data";
 import ProductCard from "@/components/ProductCard";
 import Link from "next/link";
+import { AZ } from "@/lib/ui-theme";
+import { Recycle, ShieldCheck, TrendingUp, Leaf } from "lucide-react";
+
+const STATS = [
+  { n: "47", label: "Items processed", Icon: Recycle },
+  { n: "₹1.84L", label: "Value recovered", Icon: TrendingUp },
+  { n: "12", label: "Returns prevented", Icon: ShieldCheck },
+  { n: "38.5kg", label: "E-waste diverted", Icon: Leaf },
+];
 
 export default function HomePage() {
   const products = getProducts();
   return (
-    <div>
-      {/* Hero */}
-      <div className="relative overflow-hidden" style={{ borderBottom: "1px solid #27272a" }}>
-        {/* Ambient glow */}
-        <div className="absolute inset-0 pointer-events-none" style={{
-          background: "radial-gradient(ellipse 60% 50% at 50% 0%, rgba(16,185,129,0.08) 0%, transparent 70%)"
-        }} />
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-px h-32 opacity-30" style={{ background: "linear-gradient(to bottom, #10b981, transparent)" }} />
-
-        <div className="max-w-6xl mx-auto px-5 py-16 text-center relative">
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full mb-6 animate-fade-in" style={{ background: "rgba(16,185,129,0.08)", border: "1px solid rgba(16,185,129,0.2)" }}>
-            <span className="text-xs" style={{ color: "#10b981" }}>♻</span>
-            <span className="text-xs font-semibold" style={{ color: "#10b981", fontFamily: "Figtree, sans-serif" }}>Second Life Commerce · HackOn with Amazon 6.0</span>
+    <div style={{ background: AZ.page, minHeight: "100%" }}>
+      {/* Hero banner */}
+      <div style={{ background: "linear-gradient(180deg,#232F3E 0%,#37475A 100%)" }}>
+        <div className="max-w-7xl mx-auto px-4 py-10">
+          <div className="flex items-center gap-2 mb-3">
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded text-xs font-semibold"
+                  style={{ background: "rgba(6,125,98,0.25)", color: "#fff" }}>
+              <Recycle size={13} color={AZ.ctaOrange} /> Second Life Commerce · HackOn with Amazon 6.0
+            </span>
           </div>
-
-          <h1 className="text-5xl md:text-6xl font-bold mb-4 animate-fade-up" style={{ fontFamily: "Syne, sans-serif", color: "#fafafa", letterSpacing: "-0.03em" }}>
-            Every product deserves<br />
-            <span style={{ color: "#10b981" }}>a second life.</span>
+          <h1 className="text-3xl md:text-4xl font-bold text-white mb-2" style={{ fontFamily: "Syne, sans-serif" }}>
+            Every product deserves a second life.
           </h1>
-
-          <p className="text-lg max-w-xl mx-auto mb-10 animate-fade-up delay-1" style={{ color: "#71717a", fontFamily: "Figtree, sans-serif" }}>
+          <p className="text-sm max-w-2xl mb-6" style={{ color: "#D5D9D9", fontFamily: "Figtree, sans-serif" }}>
             AI grades returned items, optimises disposition across 5 channels, and matches each item to its next best owner — at scale.
           </p>
 
-          <div className="flex flex-wrap gap-6 justify-center animate-fade-up delay-2">
-            {[
-              { n: "47", label: "Items processed" },
-              { n: "₹1.84L", label: "Value recovered" },
-              { n: "12", label: "Returns prevented" },
-              { n: "38.5kg", label: "E-waste diverted" },
-            ].map((stat) => (
-              <div key={stat.label} className="text-center">
-                <div className="text-2xl font-bold" style={{ fontFamily: "Syne, sans-serif", color: "#10b981" }}>{stat.n}</div>
-                <div className="text-xs" style={{ color: "#52525b", fontFamily: "Figtree, sans-serif" }}>{stat.label}</div>
-              </div>
-            ))}
-          </div>
-
-          {/* Demo flow CTA */}
-          <div className="flex flex-wrap gap-3 justify-center mt-8 animate-fade-up delay-2">
-            <Link
-              href="/account"
-              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold text-sm transition-all hover:opacity-90 active:scale-[0.98]"
-              style={{ background: "#10b981", color: "#0c0c0e", fontFamily: "Figtree, sans-serif" }}
-            >
-              ♻ My Orders & Returns
+          <div className="flex flex-wrap gap-3">
+            <Link href="/account" className="inline-flex items-center gap-2 px-5 py-2.5 rounded-md font-bold text-sm"
+                  style={{ background: AZ.ctaYellow, border: `1px solid ${AZ.ctaYellowBorder}`, color: AZ.ink, fontFamily: "Figtree, sans-serif" }}>
+              My Orders &amp; Returns
             </Link>
-            <Link
-              href="/marketplace"
-              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold text-sm transition-all hover:opacity-80"
-              style={{ background: "#111113", color: "#fafafa", border: "1px solid #3f3f46", fontFamily: "Figtree, sans-serif" }}
-            >
+            <Link href="/marketplace" className="inline-flex items-center gap-2 px-5 py-2.5 rounded-md font-bold text-sm"
+                  style={{ background: "#fff", border: `1px solid ${AZ.border}`, color: AZ.ink, fontFamily: "Figtree, sans-serif" }}>
               Browse Marketplace →
             </Link>
           </div>
         </div>
       </div>
 
-      {/* Product grid */}
-      <div className="max-w-6xl mx-auto px-5 py-10">
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <h2 className="text-2xl font-bold" style={{ fontFamily: "Syne, sans-serif", color: "#fafafa" }}>Product Catalog</h2>
-            <p className="text-sm mt-0.5" style={{ color: "#52525b", fontFamily: "Figtree, sans-serif" }}>Click any product — AI predicts your return risk before you buy.</p>
-          </div>
-          <div className="text-sm font-medium px-3 py-1.5 rounded-lg" style={{ background: "#18181b", color: "#52525b", border: "1px solid #27272a", fontFamily: "Figtree, sans-serif" }}>
-            {products.length} products
-          </div>
+      <div className="max-w-7xl mx-auto px-4 -mt-6">
+        {/* KPI strip floating over hero */}
+        <div className="rounded-lg grid grid-cols-2 md:grid-cols-4 gap-px overflow-hidden"
+             style={{ background: AZ.border, border: `1px solid ${AZ.border}` }}>
+          {STATS.map(({ n, label, Icon }) => (
+            <div key={label} className="flex items-center gap-3 px-4 py-4" style={{ background: AZ.card }}>
+              <div className="w-10 h-10 rounded-md flex items-center justify-center flex-shrink-0" style={{ background: AZ.greenBg }}>
+                <Icon size={20} color={AZ.green} />
+              </div>
+              <div>
+                <div className="text-xl font-bold" style={{ fontFamily: "Syne, sans-serif", color: AZ.ink }}>{n}</div>
+                <div className="text-xs" style={{ color: AZ.ink2, fontFamily: "Figtree, sans-serif" }}>{label}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Product catalog */}
+      <div className="max-w-7xl mx-auto px-4 py-8">
+        <div className="rounded-lg p-4 mb-4" style={{ background: AZ.card, border: `1px solid ${AZ.border}` }}>
+          <h2 className="text-xl font-bold" style={{ fontFamily: "Syne, sans-serif", color: AZ.ink }}>Today&apos;s Catalog</h2>
+          <p className="text-sm mt-0.5" style={{ color: AZ.ink2, fontFamily: "Figtree, sans-serif" }}>
+            Click any product — AI predicts your return risk before you buy.
+          </p>
         </div>
 
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
-          {products.map((p, i) => (
-            <div key={p.id} className="animate-fade-up" style={{ animationDelay: `${i * 30}ms` }}>
-              <ProductCard product={p} />
-            </div>
+          {products.map((p) => (
+            <ProductCard key={p.id} product={p} />
           ))}
         </div>
       </div>

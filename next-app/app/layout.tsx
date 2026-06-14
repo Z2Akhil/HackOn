@@ -18,7 +18,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body style={{ minHeight: "100vh", display: "flex", flexDirection: "column" }}>
         <Nav />
         <main style={{ flex: 1 }}>{children}</main>
-        <footer style={{ borderTop: "1px solid #27272a", textAlign: "center", padding: "16px", fontSize: "12px", color: "#52525b", fontFamily: "Figtree, sans-serif" }}>
+        <footer style={{ background: "#232F3E", textAlign: "center", padding: "24px 16px", fontSize: "12px", color: "#cccccc", fontFamily: "Figtree, sans-serif" }}>
+          <div style={{ color: "#fff", fontFamily: "Syne, sans-serif", fontWeight: 700, marginBottom: 4 }}>
+            Re<span style={{ color: "#FFA41C" }}>Loop</span>
+          </div>
           ReLoop · HackOn with Amazon 6.0 · Second Life Commerce
         </footer>
       </body>
