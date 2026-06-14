@@ -5,6 +5,8 @@ import { GradeResult, DispositionResult } from "@/types";
 import GradeCard from "@/components/GradeCard";
 import DispositionCard from "@/components/DispositionCard";
 import { storeVideo } from "@/lib/video-store";
+import TriageRoom from "@/components/TriageRoom";
+import { ConditionReport } from "@/hooks/useConditionAssessment";
 import { AZ } from "@/lib/ui-theme";
 import { Check } from "lucide-react";
 
@@ -46,7 +48,59 @@ const MOCK_DISPOSITION: DispositionResult = {
 };
 
 type Order = typeof DEMO_ORDERS[0];
-type Step = "reason" | "upload" | "extracting" | "grading" | "result";
+type Step = "reason" | "method" | "upload" | "triage" | "extracting" | "grading" | "result";
+
+// Map the live-triage ConditionReport onto the GradeResult the disposition
+// engine expects, so the live path feeds the exact same downstream pipeline.
+const SEVERITY_RANK: Record<string, number> = { minor: 1, moderate: 2, severe: 3 };
+const TRIAGE_PACKAGING_MAP: Record<string, string> = {
+  original_box: "original_box",
+  generic_packaging: "original_packaging",
+  no_packaging: "missing_box",
+  unknown: "missing_box",
+};
+
+function conditionToGrade(report: ConditionReport): GradeResult {
+  const maxSev = (report.defects ?? []).reduce(
+    (m, d) => Math.max(m, SEVERITY_RANK[d.severity] ?? 0),
+    0
+  );
+
+  let grade: GradeResult["grade"];
+  switch (report.overall_condition) {
+    case "like_new": grade = "A"; break;
+    case "used_good": grade = "A-"; break;
+    case "used_with_damage": grade = maxSev >= 3 ? "B" : "B+"; break;
+    case "heavily_damaged": grade = "C"; break;
+    default: grade = "B+";
+  }
+
+  let functional_risk: GradeResult["functional_risk"];
+  if (report.overall_condition === "heavily_damaged" || maxSev >= 3) functional_risk = "high";
+  else if (maxSev === 2) functional_risk = "medium";
+  else if (maxSev === 1) functional_risk = "low";
+  else functional_risk = "none";
+
+  return {
+    grade,
+    functional_risk,
+    defects: (report.defects ?? []).map(
+      (d) => `${d.type.replace(/_/g, " ")} on ${d.location}`
+    ),
+    packaging_status: TRIAGE_PACKAGING_MAP[report.packaging_status] ?? "missing_box",
+    accessories_complete: report.accessories_complete !== false, // null/true → true
+    confidence: report.confidence ?? 0.85,
+  };
+}
+
+// Convert a Base64 JPEG (no data prefix) captured during triage into a File
+// so it can be stored alongside upload-path listings.
+function base64ToFile(b64: string, name: string): File {
+  const byteString = atob(b64);
+  const arr = new Uint8Array(byteString.length);
+  for (let i = 0; i < byteString.length; i++) arr[i] = byteString.charCodeAt(i);
+  return new File([arr], name, { type: "image/jpeg" });
+}
 
 const DECISION_CONFIG = {
   resell: {
@@ -444,10 +498,40 @@ export default function ReturnModal({ order, onClose }: { order: Order; onClose:
     setMediaFiles((prev) => prev.filter((_, i) => i !== idx));
   }
 
-  const STEPS = ["Reason", "Photos", "Result"];
-  const STEP_IDX: Record<Step, number> = { reason: 0, upload: 1, extracting: 1, grading: 1, result: 2 };
+  const STEPS = ["Reason", "Inspect", "Result"];
+  const STEP_IDX: Record<Step, number> = { reason: 0, method: 0, upload: 1, triage: 1, extracting: 1, grading: 1, result: 2 };
   const currentStepIdx = STEP_IDX[step];
 
+  // Shared: given a grade + any inspection files, run disposition and show result.
+  async function runDisposition(gradeData: GradeResult, filesForStorage: File[], videoFile?: File) {
+    setGrade(gradeData);
+
+    let dispData: DispositionResult = MOCK_DISPOSITION;
+    try {
+      const res = await fetch("/api/disposition", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ grade: gradeData, product_id: order.product_id, product_name: order.product_name, category: order.category, mrp: order.mrp, return_reason: reason }),
+      });
+      if (res.ok) { const p = await res.json(); if (p?.decision) dispData = p; }
+    } catch {}
+    setDisposition(dispData);
+
+    if (["resell", "refurbish"].includes(dispData.decision) && filesForStorage.length > 0) {
+      setPendingListing({
+        grade: gradeData,
+        disposition: dispData,
+        frameFiles: filesForStorage,
+        videoFile,
+      });
+    }
+
+    setKeepItChoice("pending");
+    setLoading(false);
+    setStep("result");
+  }
+
+  // Upload path: grade uploaded photos/video, then run disposition.
   async function handleSubmit() {
     if (!reason) return;
     setLoading(true);
@@ -477,36 +561,23 @@ export default function ReturnModal({ order, onClose }: { order: Order; onClose:
       clearTimeout(t);
       if (res.ok) { const p = await res.json(); if (p?.grade) gradeData = p; }
     } catch {}
-    setGrade(gradeData);
 
-    let dispData: DispositionResult = MOCK_DISPOSITION;
-    try {
-      const res = await fetch("/api/disposition", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ grade: gradeData, product_id: order.product_id, product_name: order.product_name, category: order.category, mrp: order.mrp, return_reason: reason }),
-      });
-      if (res.ok) { const p = await res.json(); if (p?.decision) dispData = p; }
-    } catch {}
-    setDisposition(dispData);
+    await runDisposition(gradeData, filesForStorage, isVideo ? mediaFiles[0] : undefined);
+  }
 
-    if (["resell", "refurbish"].includes(dispData.decision) && filesForStorage.length > 0) {
-      setPendingListing({
-        grade: gradeData,
-        disposition: dispData,
-        frameFiles: filesForStorage,
-        videoFile: isVideo ? mediaFiles[0] : undefined,
-      });
-    }
-
-    setLoading(false);
-    setStep("result");
+  // Live-triage path: the AI condition report maps to a grade, then same flow.
+  async function handleTriageComplete(report: ConditionReport, frames: string[]) {
+    setLoading(true);
+    setStep("grading");
+    const gradeData = conditionToGrade(report);
+    const files = frames.slice(-3).map((b64, i) => base64ToFile(b64, `triage_frame_${i}.jpg`));
+    await runDisposition(gradeData, files, undefined);
   }
 
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4" style={{ background: "rgba(15,17,17,0.5)", backdropFilter: "blur(8px)" }}>
       <div
-        className="w-full sm:max-w-lg max-h-[92vh] overflow-y-auto rounded-t-2xl sm:rounded-2xl"
+        className={`w-full ${step === "triage" ? "sm:max-w-4xl" : "sm:max-w-lg"} max-h-[92vh] overflow-y-auto rounded-t-2xl sm:rounded-2xl`}
         style={{ background: AZ.card, border: `1px solid ${AZ.border}` }}
       >
         {/* Modal header */}
@@ -551,7 +622,7 @@ export default function ReturnModal({ order, onClose }: { order: Order; onClose:
               <p className="text-xs mb-3" style={{ color: AZ.ink2, fontFamily: "Figtree, sans-serif" }}>Return reason is the strongest disposition signal.</p>
               {RETURN_REASONS.map((r) => (
                 <button key={r.value}
-                  onClick={() => { setReason(r.value); setStep("upload"); }}
+                  onClick={() => { setReason(r.value); setStep("method"); }}
                   className="w-full text-left p-3.5 rounded-xl flex items-center gap-3 transition-all"
                   style={{ background: AZ.surfaceAlt, border: `1px solid ${AZ.border}` }}
                   onMouseEnter={e => (e.currentTarget.style.borderColor = AZ.borderDark)}
@@ -562,6 +633,63 @@ export default function ReturnModal({ order, onClose }: { order: Order; onClose:
                   <span className="ml-auto text-xs" style={{ color: AZ.ink2 }}>→</span>
                 </button>
               ))}
+            </div>
+          )}
+
+          {/* Step: Inspection method choice */}
+          {step === "method" && (
+            <div className="space-y-3">
+              <p className="font-bold" style={{ fontFamily: "Syne, sans-serif", color: AZ.ink }}>How would you like to inspect the item?</p>
+              <p className="text-xs mb-1" style={{ color: AZ.ink2, fontFamily: "Figtree, sans-serif" }}>AI grades the item to decide the best outcome — keep, resell, refurbish, donate or recycle.</p>
+
+              <button
+                onClick={() => setStep("triage")}
+                className="w-full text-left p-4 rounded-xl flex items-center gap-3 transition-all"
+                style={{ background: "rgba(16,185,129,0.06)", border: "1px solid rgba(16,185,129,0.3)" }}
+              >
+                <span className="text-2xl w-8 text-center">🎥</span>
+                <div className="flex-1">
+                  <div className="flex items-center gap-2">
+                    <span className="font-semibold text-sm" style={{ color: AZ.ink, fontFamily: "Figtree, sans-serif" }}>Live AI Inspection</span>
+                    <span className="text-xs px-1.5 py-0.5 rounded font-semibold" style={{ background: "rgba(16,185,129,0.15)", color: "#10b981", fontFamily: "Figtree, sans-serif" }}>Recommended</span>
+                  </div>
+                  <p className="text-xs mt-0.5" style={{ color: AZ.ink2, fontFamily: "Figtree, sans-serif" }}>Camera + voice guide detects defects live, then auto-grades.</p>
+                </div>
+                <span className="text-xs" style={{ color: AZ.ink2 }}>→</span>
+              </button>
+
+              <button
+                onClick={() => setStep("upload")}
+                className="w-full text-left p-4 rounded-xl flex items-center gap-3 transition-all"
+                style={{ background: AZ.surfaceAlt, border: `1px solid ${AZ.border}` }}
+                onMouseEnter={e => (e.currentTarget.style.borderColor = AZ.borderDark)}
+                onMouseLeave={e => (e.currentTarget.style.borderColor = AZ.border)}
+              >
+                <span className="text-2xl w-8 text-center">📷</span>
+                <div className="flex-1">
+                  <span className="font-semibold text-sm" style={{ color: AZ.ink, fontFamily: "Figtree, sans-serif" }}>Upload Photos or Video</span>
+                  <p className="text-xs mt-0.5" style={{ color: AZ.ink2, fontFamily: "Figtree, sans-serif" }}>Up to 3 photos or a short clip — graded by AI vision.</p>
+                </div>
+                <span className="text-xs" style={{ color: AZ.ink2 }}>→</span>
+              </button>
+
+              <button onClick={() => setStep("reason")} className="w-full text-sm" style={{ color: AZ.ink2 }}>← Back</button>
+            </div>
+          )}
+
+          {/* Step: Live triage inspection */}
+          {step === "triage" && (
+            <div className="space-y-3">
+              <div>
+                <p className="font-bold" style={{ fontFamily: "Syne, sans-serif", color: AZ.ink }}>Live AI Inspection</p>
+                <p className="text-xs mt-0.5" style={{ color: AZ.ink2, fontFamily: "Figtree, sans-serif" }}>
+                  Start the session, rotate the item as the agent guides you, then tap <strong>Assess Condition</strong> to grade and continue.
+                </p>
+              </div>
+              <div style={{ height: "62vh", borderRadius: 12, overflow: "hidden", border: `1px solid ${AZ.border}` }}>
+                <TriageRoom embedded onAssessmentComplete={handleTriageComplete} />
+              </div>
+              <button onClick={() => setStep("method")} className="w-full text-sm" style={{ color: AZ.ink2 }}>← Back to inspection options</button>
             </div>
           )}
 
@@ -641,7 +769,7 @@ export default function ReturnModal({ order, onClose }: { order: Order; onClose:
                 style={{ background: !hasFiles ? AZ.surfaceAlt : AZ.ctaYellow, color: !hasFiles ? AZ.ink2 : AZ.ink, fontFamily: "Figtree, sans-serif", cursor: !hasFiles ? "not-allowed" : "pointer", border: !hasFiles ? `1px solid ${AZ.border}` : `1px solid ${AZ.ctaYellowBorder}` }}>
                 {!hasFiles ? "Upload a photo or video to continue" : isVideo ? "Extract Frames & Grade →" : `Submit ${mediaFiles.length} photo${mediaFiles.length > 1 ? "s" : ""} & Grade with AI →`}
               </button>
-              <button onClick={() => setStep("reason")} className="w-full text-sm" style={{ color: AZ.link }}>← Back</button>
+              <button onClick={() => setStep("method")} className="w-full text-sm" style={{ color: AZ.link }}>← Back</button>
             </div>
           )}
 
