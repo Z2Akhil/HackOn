@@ -128,16 +128,16 @@ function MarketplaceInner() {
   //    visible to them, priced + match-scored for that buyer, replacing the
   //    generic seed copy of the same product.
   const listings = useMemo<MarketplaceListing[]>(() => {
+    const ownProductIds = new Set(userListings.map((l) => l.product_id));
+    const base = apiListings.filter((l) => !ownProductIds.has(l.product_id));
+
     if (!activeBuyerId) {
-      const ownIds = new Set(userListings.map((l) => l.id));
-      const ownProductIds = new Set(userListings.map((l) => l.product_id));
-      return apiListings.filter((l) => !ownIds.has(l.id) && !ownProductIds.has(l.product_id));
+      // Default view: show own listings first (with "Your Listing" badge in card), then rest
+      return [...userListings, ...base];
     }
     const buyer = buyers.find((b) => b.id === activeBuyerId);
     if (!buyer || userListings.length === 0) return apiListings;
     const scoredOwn = personalizeForBuyer(buyer, applyDynamicPricing(userListings, buyers));
-    const ownProductIds = new Set(userListings.map((l) => l.product_id));
-    const base = apiListings.filter((l) => !ownProductIds.has(l.product_id));
     return [...scoredOwn, ...base].sort(
       (a, b) => ((b as PersonalizedListing).match_score ?? 0) - ((a as PersonalizedListing).match_score ?? 0)
     );
@@ -316,6 +316,12 @@ function ListingCard({ listing, onSelect }: { listing: MarketplaceListing; onSel
     >
       {/* Image */}
       <div className="relative aspect-square flex items-center justify-center" style={{ background: "#fff", padding: 14 }}>
+        {listing.id.startsWith("ul_") && (
+          <div className="absolute top-2 right-2 px-1.5 py-0.5 rounded text-xs font-bold z-10"
+               style={{ background: "#067D62", color: "#fff" }}>
+            Your Listing
+          </div>
+        )}
         {pers && tone && (
           <div className="absolute top-2 left-2 px-1.5 py-0.5 rounded text-xs font-bold z-10"
                style={{ background: tone.bg, color: tone.color }}>

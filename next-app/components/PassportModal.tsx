@@ -50,7 +50,6 @@ function CircularityBar({ score }: { score: number }) {
 export default function PassportModal({ listing, onClose, hideBuyButton }: { listing: MarketplaceListing; onClose: () => void; hideBuyButton?: boolean }) {
   const router = useRouter();
   const [lightboxImg, setLightboxImg] = useState<string | null>(null);
-  const [videoPlaying, setVideoPlaying] = useState(false);
   const [userVideoUrl, setUserVideoUrl] = useState<string | null>(null);
   const cfg = CONDITION[listing.grade.grade] ?? FALLBACK_CONDITION;
   const livePrice = listing.dynamic_price ?? listing.asking_price;
@@ -71,13 +70,13 @@ export default function PassportModal({ listing, onClose, hideBuyButton }: { lis
   }
 
   useEffect(() => {
-    if (!hideBuyButton || !listing.id.startsWith("ul_")) return;
+    if (!listing.id.startsWith("ul_")) return;
     getVideo(listing.id).then((file) => {
       if (file) setUserVideoUrl(URL.createObjectURL(file));
     }).catch(() => {});
     return () => { if (userVideoUrl) URL.revokeObjectURL(userVideoUrl); };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [listing.id, hideBuyButton]);
+  }, [listing.id]);
 
   return (
     <div
@@ -159,10 +158,10 @@ export default function PassportModal({ listing, onClose, hideBuyButton }: { lis
           )}
 
           {/* Seller view: show real video from IndexedDB if uploaded */}
-          {hideBuyButton && userVideoUrl && (
+          {userVideoUrl && (
             <div>
               <p className="text-xs font-semibold uppercase tracking-widest mb-2" style={{ color: AZ.ink2, fontFamily: "Figtree, sans-serif" }}>
-                Your Inspection Video
+                {hideBuyButton ? "Your Inspection Video" : "Inspection Video · Uploaded by Seller"}
               </p>
               <div className="relative rounded-xl overflow-hidden" style={{ background: AZ.surfaceAlt, border: `1px solid ${AZ.border}` }}>
                 <video
@@ -172,52 +171,12 @@ export default function PassportModal({ listing, onClose, hideBuyButton }: { lis
                   style={{ maxHeight: 220 }}
                 />
                 <div className="absolute top-2 right-2 text-xs px-2 py-0.5 rounded font-semibold" style={{ background: AZ.green, color: "#fff", fontFamily: "Figtree, sans-serif" }}>
-                  Uploaded
+                  {hideBuyButton ? "Uploaded" : "Verified"}
                 </div>
               </div>
             </div>
           )}
 
-          {/* Public marketplace view: demo video */}
-          {!hideBuyButton && (
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-widest mb-2" style={{ color: AZ.ink2, fontFamily: "Figtree, sans-serif" }}>
-                360° Inspection Video
-              </p>
-              {videoPlaying ? (
-                <div className="relative rounded-xl overflow-hidden" style={{ background: AZ.surfaceAlt, border: `1px solid ${AZ.border}` }}>
-                  <video
-                    className="w-full rounded-xl"
-                    controls
-                    autoPlay
-                    style={{ maxHeight: 220 }}
-                    onError={() => setVideoPlaying(false)}
-                  >
-                    <source src="https://www.w3schools.com/html/mov_bbb.mp4" type="video/mp4" />
-                  </video>
-                  <div className="absolute top-2 right-2 text-xs px-2 py-0.5 rounded font-semibold" style={{ background: AZ.green, color: "#fff", fontFamily: "Figtree, sans-serif" }}>
-                    AI Recorded
-                  </div>
-                </div>
-              ) : (
-                <button
-                  onClick={() => setVideoPlaying(true)}
-                  className="relative w-full rounded-xl overflow-hidden group transition-all"
-                  style={{ background: AZ.surfaceAlt, border: `1px solid ${AZ.border}` }}
-                >
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={listing.image} alt="Video thumbnail" className="w-full object-cover" style={{ height: 160, filter: "brightness(0.7)" }} />
-                  <div className="absolute inset-0 flex flex-col items-center justify-center gap-2">
-                    <div className="w-12 h-12 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform" style={{ background: AZ.green }}>
-                      <Play size={20} color="#fff" fill="#fff" className="pl-0.5" />
-                    </div>
-                    <p className="text-xs font-semibold" style={{ color: AZ.ink, fontFamily: "Figtree, sans-serif" }}>Play Inspection Video</p>
-                    <p className="text-xs" style={{ color: AZ.ink2, fontFamily: "Figtree, sans-serif" }}>Recorded at return · 0:45</p>
-                  </div>
-                </button>
-              )}
-            </div>
-          )}
 
           {/* Grade block */}
           <div className="rounded-xl p-4" style={{ background: cfg.bg, border: `1px solid ${AZ.border}` }}>

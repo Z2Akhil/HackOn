@@ -10,9 +10,10 @@ import { Check } from "lucide-react";
 
 const CDN = "https://cdn.dummyjson.com/product-images";
 export const DEMO_ORDERS = [
-  { id: "o001", product_id: "p003", product_name: "Bajaj Mixer Grinder 750W",         category: "home_appliances", mrp: 3499,  ordered: "2026-05-18", image: `${CDN}/kitchen-accessories/boxed-blender/thumbnail.webp` },
+  { id: "o006", product_id: "p012", product_name: "boAt Airdopes 141 TWS Earbuds",     category: "electronics",     mrp: 1299,  ordered: "2026-06-12", image: `${CDN}/mobile-accessories/apple-airpods/thumbnail.webp` },
   { id: "o002", product_id: "p001", product_name: "Sony WH-1000XM5 Headphones",       category: "electronics",     mrp: 29990, ordered: "2026-05-22", image: `${CDN}/mobile-accessories/apple-airpods-max-silver/thumbnail.webp` },
   { id: "o003", product_id: "p004", product_name: "Levis 511 Slim Fit Jeans",          category: "apparel",         mrp: 4999,  ordered: "2026-06-01", image: `${CDN}/mens-shirts/blue-&-black-check-shirt/thumbnail.webp` },
+  { id: "o001", product_id: "p003", product_name: "Bajaj Mixer Grinder 750W",         category: "home_appliances",  mrp: 3499,  ordered: "2026-05-18", image: `${CDN}/kitchen-accessories/boxed-blender/thumbnail.webp` },
   { id: "o004", product_id: "p009", product_name: "Bombay Dyeing Double Bedsheet Set", category: "home",            mrp: 1499,  ordered: "2026-06-05", image: `${CDN}/furniture/annibale-colombo-bed/thumbnail.webp` },
 ];
 
