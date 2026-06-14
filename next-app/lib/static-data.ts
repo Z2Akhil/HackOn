@@ -1,5 +1,5 @@
 // All data hardcoded — no fs reads, works on Vercel serverless
-import { Product, Buyer, MarketplaceListing } from "@/types";
+import { Product, Buyer, MarketplaceListing, GradeResult } from "@/types";
 import { computeCircularityScore } from "./circularity";
 
 const CDN = "https://cdn.dummyjson.com/product-images";
@@ -103,9 +103,47 @@ const GRADE_LIFESPAN_MULT: Record<string, number> = { A:1.0, "A-":0.85, "B+":0.7
 const GRADE_WARRANTY: Record<string, number> = { A:6, "A-":4, "B+":3, B:1, C:0 };
 // CO2 saved for resell channel
 const CO2_RESELL_KG = 14.2;
+const DAY_MS = 1000 * 60 * 60 * 24;
 
-// Pre-built marketplace listings
-export const MARKETPLACE_LISTINGS: MarketplaceListing[] = RETURN_EVENTS.map((e, i) => {
+// Factory that mirrors the listing-derivation logic so hand-built listings
+// stay consistent with the auto-generated ones.
+function buildListing(opts: {
+  id: string;
+  product_id: string;
+  product_name: string;
+  category: string;
+  mrp: number;
+  grade: GradeResult;
+  age_days: number;
+  image: string;
+  asking_price?: number; // optional override (else derived from resale table)
+}): MarketplaceListing {
+  const { category: cat, grade } = opts;
+  const g = grade.grade;
+  const resalePct = RESALE_REFERENCE[cat]?.[g]?.expected_resale_pct_of_mrp ?? 0.5;
+  const circularity = computeCircularityScore(grade, cat);
+  const baseLifespan = CATEGORY_LIFESPAN[cat] ?? 5;
+  const lifespan = parseFloat((baseLifespan * (GRADE_LIFESPAN_MULT[g] ?? 0.7)).toFixed(1));
+  return {
+    id: opts.id,
+    product_id: opts.product_id,
+    product_name: opts.product_name,
+    category: cat,
+    mrp: opts.mrp,
+    asking_price: opts.asking_price ?? Math.round(opts.mrp * resalePct),
+    grade,
+    decision: "resell",
+    listed_at: new Date(Date.now() - opts.age_days * DAY_MS).toISOString(),
+    image: opts.image,
+    circularity_score: circularity,
+    co2_saved_kg: CO2_RESELL_KG,
+    expected_lifespan_years: lifespan,
+    warranty_months: GRADE_WARRANTY[g] ?? 0,
+  };
+}
+
+// Auto-generated listings from return history
+const BASE_LISTINGS: MarketplaceListing[] = RETURN_EVENTS.map((e, i) => {
   const cat = e.category;
   const g = e.mock_grade?.grade ?? "A-";
   const resalePct = RESALE_REFERENCE[cat]?.[g]?.expected_resale_pct_of_mrp ?? 0.5;
@@ -130,3 +168,48 @@ export const MARKETPLACE_LISTINGS: MarketplaceListing[] = RETURN_EVENTS.map((e, 
     warranty_months: GRADE_WARRANTY[g] ?? 0,
   };
 });
+
+// Low-demand listings — Grade C (no buyer's grade_tolerance accepts "C", which
+// strips the +30 grade points) in the `beauty` niche (only 1 buyer persona has
+// affinity). Together these starve the demand sensor down to "low", so the
+// dynamic-pricing engine MARKS THEM DOWN. Varying the listed age also triggers
+// the staleness markdown, producing -6% / -12% / -18% drops. asking_price is
+// set explicitly to keep prices believable (Grade-C beauty resale is punishing).
+const LOW_DEMAND_LISTINGS: MarketplaceListing[] = [
+  buildListing({
+    id: "listing_low01",
+    product_id: "p021",
+    product_name: "Chanel Coco Noir Eau de Parfum (Open Box)",
+    category: "beauty",
+    mrp: 13999,
+    asking_price: 5200, // ~37% of MRP
+    grade: { grade: "C", functional_risk: "low", defects: ["~30% used", "box damaged", "cap scuffed"], packaging_status: "damaged_box", accessories_complete: false, confidence: 0.78 },
+    age_days: 0, // fresh → low-demand markdown only (≈ -6%)
+    image: `${CDN}/fragrances/chanel-coco-noir-eau-de/thumbnail.webp`,
+  }),
+  buildListing({
+    id: "listing_low02",
+    product_id: "p022",
+    product_name: "L'Oréal Infallible Foundation Kit (Open Box)",
+    category: "beauty",
+    mrp: 2499,
+    asking_price: 950, // ~38% of MRP
+    grade: { grade: "C", functional_risk: "low", defects: ["multiple shades swatched", "carton torn", "pump stiff"], packaging_status: "missing_box", accessories_complete: false, confidence: 0.74 },
+    age_days: 5, // aged 3–7d → stacked markdown (≈ -12%)
+    image: `${CDN}/beauty/powder-canister/thumbnail.webp`,
+  }),
+  buildListing({
+    id: "listing_low03",
+    product_id: "p023",
+    product_name: "Maybelline Lipstick Gift Set (Open Box)",
+    category: "beauty",
+    mrp: 1899,
+    asking_price: 720, // ~38% of MRP
+    grade: { grade: "C", functional_risk: "low", defects: ["2 shades used", "sleeve torn", "missing 1 item"], packaging_status: "missing_box", accessories_complete: false, confidence: 0.72 },
+    age_days: 10, // stale >7d → biggest markdown (≈ -18%)
+    image: `${CDN}/beauty/red-lipstick/thumbnail.webp`,
+  }),
+];
+
+// Pre-built marketplace listings (auto-generated + curated low-demand examples)
+export const MARKETPLACE_LISTINGS: MarketplaceListing[] = [...BASE_LISTINGS, ...LOW_DEMAND_LISTINGS];
