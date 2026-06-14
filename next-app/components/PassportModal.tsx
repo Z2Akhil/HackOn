@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { MarketplaceListing } from "@/types";
 
 const CDN = "https://cdn.dummyjson.com/product-images";
@@ -20,11 +20,6 @@ function getInspectionPhotos(listing: MarketplaceListing): string[] {
   return [listing.image, ...secondary].filter(Boolean).slice(0, 3);
 }
 
-interface Match {
-  buyer: { id: string; name: string; price_band: string; eco_preference: number };
-  score: number;
-  reason: string;
-}
 
 const GRADE_CONFIG: Record<string, { label: string; color: string; bg: string; border: string }> = {
   "A":  { label: "Like New",       color: "#10b981", bg: "rgba(16,185,129,0.08)",  border: "rgba(16,185,129,0.2)" },
@@ -50,23 +45,12 @@ function CircularityBar({ score }: { score: number }) {
   );
 }
 
-export default function PassportModal({ listing, onClose }: { listing: MarketplaceListing; onClose: () => void }) {
-  const [matches, setMatches] = useState<Match[]>([]);
-  const [loadingMatches, setLoadingMatches] = useState(true);
+export default function PassportModal({ listing, onClose, hideBuyButton }: { listing: MarketplaceListing; onClose: () => void; hideBuyButton?: boolean }) {
   const [lightboxImg, setLightboxImg] = useState<string | null>(null);
   const [videoPlaying, setVideoPlaying] = useState(false);
-  const [notified, setNotified] = useState<string | null>(null);
   const cfg = GRADE_CONFIG[listing.grade.grade] ?? GRADE_CONFIG["B+"];
   const discount = Math.round((1 - listing.asking_price / listing.mrp) * 100);
   const inspectionPhotos = getInspectionPhotos(listing);
-
-  useEffect(() => {
-    fetch(`/api/match/${listing.id}`)
-      .then((r) => r.json())
-      .then((d) => setMatches(d.matches ?? []))
-      .catch(() => setMatches([]))
-      .finally(() => setLoadingMatches(false));
-  }, [listing.id]);
 
   return (
     <div
@@ -281,63 +265,12 @@ export default function PassportModal({ listing, onClose }: { listing: Marketpla
             </div>
           </div>
 
-          {/* Buyer matches */}
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-widest mb-3" style={{ color: "#52525b", fontFamily: "Figtree, sans-serif" }}>
-              AI Next-Best-Owner Matches
-            </p>
-            {loadingMatches ? (
-              <div className="space-y-2">
-                {[1,2].map(i => <div key={i} className="h-14 rounded-xl skeleton" />)}
-              </div>
-            ) : (
-              <div className="space-y-2">
-                {matches.map((m, i) => (
-                  <div
-                    key={m.buyer.id}
-                    className="flex items-center justify-between rounded-xl p-3.5"
-                    style={{
-                      background: i === 0 ? "rgba(16,185,129,0.06)" : "#18181b",
-                      border: i === 0 ? "1px solid rgba(16,185,129,0.2)" : "1px solid #27272a",
-                    }}
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold" style={{ background: i === 0 ? "rgba(16,185,129,0.15)" : "#27272a", color: i === 0 ? "#10b981" : "#52525b", fontFamily: "Syne, sans-serif" }}>
-                        {m.buyer.name[0]}
-                      </div>
-                      <div>
-                        <p className="text-sm font-semibold" style={{ color: "#fafafa", fontFamily: "Figtree, sans-serif" }}>{m.buyer.name}</p>
-                        <p className="text-xs" style={{ color: "#52525b", fontFamily: "Figtree, sans-serif" }}>{m.reason}</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <div className="text-right">
-                        {i === 0 && <p className="text-xs font-semibold" style={{ color: "#10b981", fontFamily: "Figtree, sans-serif" }}>Best match</p>}
-                        <p className="font-bold text-sm" style={{ color: i === 0 ? "#10b981" : "#52525b", fontFamily: "Syne, sans-serif" }}>{m.score}pts</p>
-                      </div>
-                      {notified === m.buyer.id ? (
-                        <span className="text-xs font-semibold px-2.5 py-1.5 rounded-lg" style={{ background: "rgba(16,185,129,0.1)", border: "1px solid rgba(16,185,129,0.2)", color: "#10b981", fontFamily: "Figtree, sans-serif" }}>
-                          ✓ Notified
-                        </span>
-                      ) : (
-                        <button
-                          onClick={() => setNotified(m.buyer.id)}
-                          className="text-xs font-semibold px-2.5 py-1.5 rounded-lg transition-all hover:opacity-80"
-                          style={{ background: "#18181b", border: "1px solid #3f3f46", color: "#a1a1aa", fontFamily: "Figtree, sans-serif" }}
-                        >
-                          Notify →
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
 
-          <button className="w-full font-semibold py-4 rounded-xl text-base transition-all hover:opacity-90 active:scale-[0.98]" style={{ background: "#10b981", color: "#0c0c0e", fontFamily: "Figtree, sans-serif" }}>
-            Buy Now — ₹{listing.asking_price.toLocaleString("en-IN")}
-          </button>
+          {!hideBuyButton && (
+            <button className="w-full font-semibold py-4 rounded-xl text-base transition-all hover:opacity-90 active:scale-[0.98]" style={{ background: "#10b981", color: "#0c0c0e", fontFamily: "Figtree, sans-serif" }}>
+              Buy Now — ₹{listing.asking_price.toLocaleString("en-IN")}
+            </button>
+          )}
         </div>
       </div>
 

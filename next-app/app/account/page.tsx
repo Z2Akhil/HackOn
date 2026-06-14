@@ -9,14 +9,15 @@ const ORDERS = [
   { id: "o001", product_name: "Bajaj Mixer Grinder 750W",         category: "home_appliances", mrp: 3499,  ordered: "18 May 2026", status: "Delivered",        returnable: true,  image: `${CDN}/kitchen-accessories/boxed-blender/thumbnail.webp` },
   { id: "o002", product_name: "Sony WH-1000XM5 Headphones",       category: "electronics",     mrp: 29990, ordered: "22 May 2026", status: "Delivered",        returnable: true,  image: `${CDN}/mobile-accessories/apple-airpods-max-silver/thumbnail.webp` },
   { id: "o003", product_name: "Levis 511 Slim Fit Jeans",          category: "apparel",         mrp: 4999,  ordered: "1 Jun 2026",  status: "Delivered",        returnable: true,  image: `${CDN}/mens-shirts/blue-&-black-check-shirt/thumbnail.webp` },
-  { id: "o004", product_name: "Bombay Dyeing Double Bedsheet Set", category: "home",            mrp: 1499,  ordered: "5 Jun 2026",  status: "Return Requested", returnable: false, image: `${CDN}/furniture/annibale-colombo-bed/thumbnail.webp` },
-  { id: "o005", product_name: "Nike Air Max 270 Sneakers (M)",     category: "apparel",         mrp: 12995, ordered: "10 Jun 2026", status: "In Transit",       returnable: false, image: `${CDN}/mens-shoes/nike-air-jordan-1-red-and-black/thumbnail.webp` },
+  { id: "o004", product_name: "Bombay Dyeing Double Bedsheet Set", category: "home",            mrp: 1499,  ordered: "5 Jun 2026",  status: "Sold via ReLoop", returnable: false, image: `${CDN}/furniture/annibale-colombo-bed/thumbnail.webp` },
+  { id: "o005", product_name: "Nike Air Max 270 Sneakers (M)",     category: "apparel",         mrp: 12995, ordered: "10 Jun 2026", status: "Sold via ReLoop", returnable: false, image: `${CDN}/mens-shoes/nike-air-jordan-1-red-and-black/thumbnail.webp` },
 ];
 
 const STATUS_STYLE: Record<string, { color: string; bg: string; border: string }> = {
   "Delivered":        { color: "#10b981", bg: "rgba(16,185,129,0.08)", border: "rgba(16,185,129,0.2)" },
   "Return Requested": { color: "#f59e0b", bg: "rgba(245,158,11,0.08)", border: "rgba(245,158,11,0.2)" },
   "In Transit":       { color: "#3b82f6", bg: "rgba(59,130,246,0.08)", border: "rgba(59,130,246,0.2)" },
+  "Sold via ReLoop":  { color: "#8b5cf6", bg: "rgba(139,92,246,0.08)", border: "rgba(139,92,246,0.2)" },
 };
 
 const DEFAULT_PROFILE = {
@@ -94,14 +95,22 @@ export default function AccountPage() {
             </div>
           </div>
 
-          {/* Edit button */}
-          <button
-            onClick={openEdit}
-            className="flex-shrink-0 text-xs px-3 py-1.5 rounded-lg font-semibold transition-all hover:opacity-80"
-            style={{ background: "#18181b", color: "#a1a1aa", border: "1px solid #27272a", fontFamily: "Figtree, sans-serif" }}
-          >
-            Edit Profile
-          </button>
+          <div className="flex flex-col gap-2 flex-shrink-0">
+            <Link
+              href="/my-listings"
+              className="text-xs px-3 py-1.5 rounded-lg font-semibold transition-all hover:opacity-90 text-center"
+              style={{ background: "#10b981", color: "#0c0c0e", fontFamily: "Figtree, sans-serif" }}
+            >
+              My Listings →
+            </Link>
+            <button
+              onClick={openEdit}
+              className="text-xs px-3 py-1.5 rounded-lg font-semibold transition-all hover:opacity-80"
+              style={{ background: "#18181b", color: "#a1a1aa", border: "1px solid #27272a", fontFamily: "Figtree, sans-serif" }}
+            >
+              Edit Profile
+            </button>
+          </div>
         </div>
 
         {saved && (
