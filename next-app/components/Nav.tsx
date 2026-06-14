@@ -15,7 +15,6 @@ const links = [
 export default function Nav() {
   const path = usePathname();
   const router = useRouter();
-  const [initials, setInitials] = useState("R");
   const [name, setName] = useState("Guest");
   const [query, setQuery] = useState("");
   const [count, setCount] = useState(0);
@@ -38,7 +37,6 @@ export default function Nav() {
         if (stored) {
           const n = JSON.parse(stored).name as string;
           setName(n.split(" ")[0]);
-          setInitials(n.split(" ").map((w: string) => w[0]).join("").slice(0, 2).toUpperCase());
         }
       } catch {}
     }
@@ -109,16 +107,6 @@ export default function Nav() {
               )}
             </span>
             <span className="hidden sm:inline text-xs font-bold">Cart</span>
-          </Link>
-
-          {/* Avatar */}
-          <Link
-            href="/account"
-            className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-black flex-shrink-0"
-            style={{ background: AZ.green, color: "#fff", fontFamily: "Syne, sans-serif" }}
-            title="My Account"
-          >
-            {initials}
           </Link>
         </div>
       </div>
