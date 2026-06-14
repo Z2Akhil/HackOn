@@ -55,6 +55,7 @@ export default function PassportModal({ listing, onClose }: { listing: Marketpla
   const [loadingMatches, setLoadingMatches] = useState(true);
   const [lightboxImg, setLightboxImg] = useState<string | null>(null);
   const [videoPlaying, setVideoPlaying] = useState(false);
+  const [notified, setNotified] = useState<string | null>(null);
   const cfg = GRADE_CONFIG[listing.grade.grade] ?? GRADE_CONFIG["B+"];
   const discount = Math.round((1 - listing.asking_price / listing.mrp) * 100);
   const inspectionPhotos = getInspectionPhotos(listing);
@@ -309,9 +310,24 @@ export default function PassportModal({ listing, onClose }: { listing: Marketpla
                         <p className="text-xs" style={{ color: "#52525b", fontFamily: "Figtree, sans-serif" }}>{m.reason}</p>
                       </div>
                     </div>
-                    <div className="text-right">
-                      {i === 0 && <p className="text-xs font-semibold" style={{ color: "#10b981", fontFamily: "Figtree, sans-serif" }}>Best match</p>}
-                      <p className="font-bold text-sm" style={{ color: i === 0 ? "#10b981" : "#52525b", fontFamily: "Syne, sans-serif" }}>{m.score}pts</p>
+                    <div className="flex items-center gap-2">
+                      <div className="text-right">
+                        {i === 0 && <p className="text-xs font-semibold" style={{ color: "#10b981", fontFamily: "Figtree, sans-serif" }}>Best match</p>}
+                        <p className="font-bold text-sm" style={{ color: i === 0 ? "#10b981" : "#52525b", fontFamily: "Syne, sans-serif" }}>{m.score}pts</p>
+                      </div>
+                      {notified === m.buyer.id ? (
+                        <span className="text-xs font-semibold px-2.5 py-1.5 rounded-lg" style={{ background: "rgba(16,185,129,0.1)", border: "1px solid rgba(16,185,129,0.2)", color: "#10b981", fontFamily: "Figtree, sans-serif" }}>
+                          ✓ Notified
+                        </span>
+                      ) : (
+                        <button
+                          onClick={() => setNotified(m.buyer.id)}
+                          className="text-xs font-semibold px-2.5 py-1.5 rounded-lg transition-all hover:opacity-80"
+                          style={{ background: "#18181b", border: "1px solid #3f3f46", color: "#a1a1aa", fontFamily: "Figtree, sans-serif" }}
+                        >
+                          Notify →
+                        </button>
+                      )}
                     </div>
                   </div>
                 ))}

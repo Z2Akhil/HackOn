@@ -32,9 +32,18 @@ const TRUST_SCORES: Record<string, number> = {
   recycle:  0.30,
 };
 
-const GREEN_CREDITS_MAP: Record<string, number> = {
+const GREEN_CREDITS_BASE: Record<string, number> = {
   donate: 80, recycle: 60, refurbish: 40, resell: 50, exchange: 30,
 };
+
+function computeGreenCredits(decision: string, mrp: number, circularity: number): number {
+  const base = GREEN_CREDITS_BASE[decision] ?? 30;
+  // Scale with product value (MRP bracket, capped multiplier)
+  const valueMultiplier = Math.min(2.0, Math.max(0.5, mrp / 5000));
+  // Scale with circularity score (0–100 → 0.7–1.3 range)
+  const circularityMultiplier = 0.7 + (circularity / 100) * 0.6;
+  return Math.round(base * valueMultiplier * circularityMultiplier);
+}
 
 // CO₂ saved vs. manufacturing new (kg)
 const CO2_SAVED_KG: Record<string, number> = {
@@ -131,7 +140,7 @@ export function computeEV(
     circularity_score,
     co2_saved_kg,
     reasoning_text: "",
-    green_credits: GREEN_CREDITS_MAP[decision] ?? 30,
+    green_credits: computeGreenCredits(decision, mrp, circularity_score),
     listing_flagged: return_reason === "not_as_described",
   };
 }

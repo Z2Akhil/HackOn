@@ -67,11 +67,30 @@ export default function DispositionCard({
             </h3>
           </div>
           <div className="text-right">
-            <p className="text-xs" style={{ color: "#52525b", fontFamily: "Figtree, sans-serif" }}>Estimated recovery</p>
-            <p className="text-2xl font-black" style={{ color: cfg.color, fontFamily: "Syne, sans-serif" }}>
-              ₹{disposition.estimated_recovery.toLocaleString("en-IN")}
-            </p>
-            <p className="text-xs" style={{ color: "#52525b", fontFamily: "Figtree, sans-serif" }}>{recoveryPct}% of MRP</p>
+            {(() => {
+              const d = disposition.decision;
+              if (d === "donate") return (
+                <>
+                  <p className="text-xs" style={{ color: "#52525b", fontFamily: "Figtree, sans-serif" }}>Est. tax benefit</p>
+                  <p className="text-2xl font-black" style={{ color: cfg.color, fontFamily: "Syne, sans-serif" }}>₹{disposition.estimated_recovery.toLocaleString("en-IN")}</p>
+                  <p className="text-xs" style={{ color: "#52525b", fontFamily: "Figtree, sans-serif" }}>80G deduction value</p>
+                </>
+              );
+              if (d === "recycle") return (
+                <>
+                  <p className="text-xs" style={{ color: "#52525b", fontFamily: "Figtree, sans-serif" }}>Material salvage</p>
+                  <p className="text-2xl font-black" style={{ color: cfg.color, fontFamily: "Syne, sans-serif" }}>₹{disposition.estimated_recovery.toLocaleString("en-IN")}</p>
+                  <p className="text-xs" style={{ color: "#52525b", fontFamily: "Figtree, sans-serif" }}>from recycler</p>
+                </>
+              );
+              return (
+                <>
+                  <p className="text-xs" style={{ color: "#52525b", fontFamily: "Figtree, sans-serif" }}>Estimated recovery</p>
+                  <p className="text-2xl font-black" style={{ color: cfg.color, fontFamily: "Syne, sans-serif" }}>₹{disposition.estimated_recovery.toLocaleString("en-IN")}</p>
+                  <p className="text-xs" style={{ color: "#52525b", fontFamily: "Figtree, sans-serif" }}>{recoveryPct}% of MRP</p>
+                </>
+              );
+            })()}
           </div>
         </div>
       </div>
