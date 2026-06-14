@@ -77,3 +77,56 @@ export interface MarketplaceListing {
   expected_lifespan_years: number;
   warranty_months: number;
 }
+
+// ============================================================================
+// DONATION MATCHING TYPES
+// ============================================================================
+
+export interface GeoLocation {
+  latitude: number;
+  longitude: number;
+  address: string;
+  city: string;
+  state: string;
+  zip: string;
+}
+
+export interface Charity {
+  id: string;
+  name: string;
+  description: string;
+  category: "education" | "health" | "livelihood" | "disability" | "disaster_relief" | "environment";
+  location: GeoLocation;
+  impact_areas: string[];
+  lives_impacted: number;
+  items_received: number;
+  accepted_categories: string[];
+  contact_person: string;
+  phone: string;
+  email: string;
+  logo: string;
+  verified: boolean;
+}
+
+export interface DonationRecord {
+  id: string;
+  donor_id: string;
+  charity_id: string;
+  product_id: string;
+  product_name: string;
+  category: string;
+  mrp: number;
+  grade: GradeResult;
+  donated_at: string;
+  delivery_status: "pending" | "in_transit" | "delivered" | "received";
+  distance_km: number;
+  lives_impacted_estimate: number;
+}
+
+export interface DonationImpact {
+  total_items_donated: number;
+  total_value_donated_inr: number;
+  lives_impacted: number;
+  categories: Record<string, number>;
+  charities_supported: string[];
+}

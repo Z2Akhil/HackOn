@@ -103,6 +103,13 @@ export default function AccountPage() {
             >
               My Listings →
             </Link>
+            <Link
+              href="/profile/donation-impact"
+              className="text-xs px-3 py-1.5 rounded-lg font-semibold transition-all hover:opacity-90 text-center"
+              style={{ background: "rgba(16,185,129,0.1)", color: "#10b981", border: "1px solid rgba(16,185,129,0.3)", fontFamily: "Figtree, sans-serif" }}
+            >
+              💝 Donations
+            </Link>
             <button
               onClick={openEdit}
               className="text-xs px-3 py-1.5 rounded-lg font-semibold transition-all hover:opacity-80"

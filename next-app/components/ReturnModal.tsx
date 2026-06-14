@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { GradeResult, DispositionResult } from "@/types";
 import GradeCard from "@/components/GradeCard";
 import DispositionCard from "@/components/DispositionCard";
+import DonationMatcher from "@/components/DonationMatcher";
 
 const CDN = "https://cdn.dummyjson.com/product-images";
 export const DEMO_ORDERS = [
@@ -19,6 +20,7 @@ const RETURN_REASONS = [
   { value: "not_as_described", label: "Not as described",         icon: "📋" },
   { value: "changed_mind",     label: "Changed my mind",          icon: "💭" },
   { value: "wrong_variant",    label: "Wrong variant / colour",   icon: "🎨" },
+  { value: "donate",           label: "💝 Donate to Charity",     icon: "🤝" },
 ];
 
 const MOCK_GRADE: GradeResult = {
@@ -42,7 +44,7 @@ const MOCK_DISPOSITION: DispositionResult = {
 };
 
 type Order = typeof DEMO_ORDERS[0];
-type Step = "reason" | "upload" | "extracting" | "grading" | "result";
+type Step = "reason" | "upload" | "extracting" | "grading" | "charity_selection" | "charity_selection_list" | "result";
 
 const DECISION_CONFIG = {
   resell: {
@@ -64,7 +66,7 @@ const DECISION_CONFIG = {
   donate: {
     icon: "🤝", color: "#8b5cf6", bg: "rgba(139,92,246,0.08)", border: "rgba(139,92,246,0.2)",
     title: "Donation Scheduled",
-    badge: () => "Tax receipt incoming",
+    badge: (d: DispositionResult) => `+${d.green_credits ?? 30} Green Credits earned`,
     body: () => "Pickup arranged with NGO partner GreenMitra Foundation within 2–3 days. A tax exemption receipt will be emailed to your registered address.",
     meta: (d: DispositionResult) => [`${d.co2_saved_kg} kg CO₂ saved`, `Circularity ${d.circularity_score}/100`, "1 product → 2nd life"],
     cta: "View Sustainability Impact →", ctaHref: "/dashboard",
@@ -193,6 +195,7 @@ export default function ReturnModal({ order, onClose }: { order: Order; onClose:
   const [otpCode] = useState(() => Math.floor(100000 + Math.random() * 900000).toString());
   const isVideo = mediaFiles[0]?.type.startsWith("video/") ?? false;
   const hasFiles = mediaFiles.length > 0;
+  const isDonationFlow = reason === "donate";
 
   async function handleFilesSelect(fileList: FileList) {
     setFileError("");
@@ -218,12 +221,21 @@ export default function ReturnModal({ order, onClose }: { order: Order; onClose:
     setMediaFiles((prev) => prev.filter((_, i) => i !== idx));
   }
 
-  const STEPS = ["Reason", "Photos", "Result"];
-  const STEP_IDX: Record<Step, number> = { reason: 0, upload: 1, extracting: 1, grading: 1, result: 2 };
+  const STEPS = isDonationFlow ? ["Reason", "Quality Check", "Charity", "Result"] : ["Reason", "Photos", "Result"];
+  const STEP_IDX: Record<Step, number> = isDonationFlow 
+    ? { reason: 0, upload: 0, extracting: 0, grading: 0, charity_selection: 1, charity_selection_list: 2, result: 3 }
+    : { reason: 0, upload: 1, extracting: 1, grading: 1, charity_selection: 0, charity_selection_list: 0, result: 2 };
   const currentStepIdx = STEP_IDX[step];
 
   async function handleSubmit() {
     if (!reason) return;
+
+    // For donation flow, skip directly to charity selection
+    if (isDonationFlow) {
+      setStep("charity_selection");
+      return;
+    }
+
     setLoading(true);
 
     let gradeData: GradeResult = MOCK_GRADE;
@@ -312,7 +324,7 @@ export default function ReturnModal({ order, onClose }: { order: Order; onClose:
               <p className="text-xs mb-3" style={{ color: "#52525b", fontFamily: "Figtree, sans-serif" }}>Return reason is the strongest disposition signal.</p>
               {RETURN_REASONS.map((r) => (
                 <button key={r.value}
-                  onClick={() => { setReason(r.value); setStep("upload"); }}
+                  onClick={() => { setReason(r.value); if (r.value === "donate") setStep("charity_selection"); else setStep("upload"); }}
                   className="w-full text-left p-3.5 rounded-xl flex items-center gap-3 transition-all"
                   style={{ background: "#111113", border: "1px solid #27272a" }}
                   onMouseEnter={e => (e.currentTarget.style.borderColor = "#3f3f46")}
@@ -403,6 +415,93 @@ export default function ReturnModal({ order, onClose }: { order: Order; onClose:
                 {!hasFiles ? "Upload a photo or video to continue" : isVideo ? "Extract Frames & Grade →" : `Submit ${mediaFiles.length} photo${mediaFiles.length > 1 ? "s" : ""} & Grade with AI →`}
               </button>
               <button onClick={() => setStep("reason")} className="w-full text-sm" style={{ color: "#52525b" }}>← Back</button>
+            </div>
+          )}
+
+          {/* Step: Charity Selection */}
+          {step === "charity_selection" && (
+            <div className="space-y-4">
+              <div>
+                <p className="font-bold" style={{ fontFamily: "Syne, sans-serif", color: "#fafafa" }}>Quality Check Required</p>
+                <p className="text-xs mb-3" style={{ color: "#52525b", fontFamily: "Figtree, sans-serif" }}>Please verify your item's condition before donating. Items must be in good working condition (Grade B+ or better).</p>
+              </div>
+
+              {/* Quality warning */}
+              <div className="rounded-xl p-3" style={{ background: "rgba(245,158,11,0.08)", border: "1px solid rgba(245,158,11,0.2)" }}>
+                <div className="flex items-start gap-2">
+                  <span>⚠️</span>
+                  <div>
+                    <p className="text-xs font-semibold" style={{ color: "#f59e0b", fontFamily: "Figtree, sans-serif" }}>Quality Standards</p>
+                    <p className="text-xs mt-0.5" style={{ color: "#52525b", fontFamily: "Figtree, sans-serif" }}>
+                      Donations are checked to ensure charities receive quality items. Items with defects, missing accessories, or functional issues cannot be donated.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Item assessment */}
+              <div className="rounded-xl p-4" style={{ background: "#111113", border: "1px solid #27272a" }}>
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span style={{ color: "#a1a1aa", fontFamily: "Figtree, sans-serif", fontSize: "0.875rem" }}>Item Condition</span>
+                    <span style={{ color: "#10b981", fontFamily: "Figtree, sans-serif", fontSize: "0.875rem", fontWeight: "bold" }}>Good (Assumed)</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span style={{ color: "#a1a1aa", fontFamily: "Figtree, sans-serif", fontSize: "0.875rem" }}>Functional Status</span>
+                    <span style={{ color: "#10b981", fontFamily: "Figtree, sans-serif", fontSize: "0.875rem", fontWeight: "bold" }}>Working</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span style={{ color: "#a1a1aa", fontFamily: "Figtree, sans-serif", fontSize: "0.875rem" }}>Minimum Grade Required</span>
+                    <span style={{ color: "#3b82f6", fontFamily: "Figtree, sans-serif", fontSize: "0.875rem", fontWeight: "bold" }}>B+</span>
+                  </div>
+                </div>
+              </div>
+
+              <p className="text-xs" style={{ color: "#52525b", fontFamily: "Figtree, sans-serif" }}>
+                By proceeding, you confirm that this item is in good working condition with no critical defects. Charities reserve the right to reject items that don't meet quality standards.
+              </p>
+
+              <button
+                onClick={() => setStep("charity_selection_list")}
+                className="w-full font-semibold py-3 rounded-xl transition-all"
+                style={{ background: "#10b981", color: "#0c0c0e", fontFamily: "Figtree, sans-serif" }}
+              >
+                Proceed to Charity Selection →
+              </button>
+              <button onClick={() => setStep("reason")} className="w-full text-sm" style={{ color: "#52525b" }}>← Back</button>
+            </div>
+          )}
+
+          {/* Step: Charity Selection List */}
+          {step === "charity_selection_list" && (
+            <div className="space-y-4">
+              <div>
+                <p className="font-bold" style={{ fontFamily: "Syne, sans-serif", color: "#fafafa" }}>Select a Charity</p>
+                <p className="text-xs mb-3" style={{ color: "#52525b", fontFamily: "Figtree, sans-serif" }}>Your {order.category} will be donated directly to a nearby organization.</p>
+              </div>
+              <DonationMatcher
+                buyerId="b001"
+                productId={order.product_id}
+                productName={order.product_name}
+                productCategory={order.category}
+                productMrp={order.mrp}
+                grade={{ grade: "B+" }}
+                onDonationSelected={async (charityId, charity) => {
+                  // Donation has been recorded by DonationMatcher
+                  // Set a mock grade for donation flow (quality checked)
+                  setGrade(MOCK_GRADE);
+                  // Create mock disposition response for donation with green credits
+                  const mockDonationDisposition: DispositionResult = {
+                    ...MOCK_DISPOSITION,
+                    decision: "donate",
+                    green_credits: 30, // Award 30 green credits for donations (lower than resale's 50)
+                    reasoning_text: "Your item has been matched to a nearby charity. Donating items reduces e-waste and earns green credits. Tax exemption receipt will be provided.",
+                  };
+                  setDisposition(mockDonationDisposition);
+                  setStep("result");
+                }}
+              />
+              <button onClick={() => setStep("charity_selection")} className="w-full text-sm" style={{ color: "#52525b" }}>← Back</button>
             </div>
           )}
 
