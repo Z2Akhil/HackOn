@@ -316,12 +316,6 @@ function ListingCard({ listing, onSelect }: { listing: MarketplaceListing; onSel
     >
       {/* Image */}
       <div className="relative aspect-square flex items-center justify-center" style={{ background: "#fff", padding: 14 }}>
-        {listing.id.startsWith("ul_") && (
-          <div className="absolute top-2 right-2 px-1.5 py-0.5 rounded text-xs font-bold z-10"
-               style={{ background: "#067D62", color: "#fff" }}>
-            Your Listing
-          </div>
-        )}
         {pers && tone && (
           <div className="absolute top-2 left-2 px-1.5 py-0.5 rounded text-xs font-bold z-10"
                style={{ background: tone.bg, color: tone.color }}>
