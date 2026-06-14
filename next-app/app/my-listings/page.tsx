@@ -3,12 +3,10 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import PassportModal from "@/components/PassportModal";
 import { MarketplaceListing } from "@/types";
+import { AZ, CONDITION } from "@/lib/ui-theme";
+import { Leaf, Recycle, Package, ArrowLeft, BadgeCheck } from "lucide-react";
 
 const CDN = "https://cdn.dummyjson.com/product-images";
-
-const GRADE_COLOR: Record<string, string> = {
-  "A": "#10b981", "A-": "#34d399", "B+": "#f59e0b", "B": "#f97316", "C": "#ef4444",
-};
 
 interface BuyerMatch {
   buyer: { id: string; name: string; price_band: string; eco_preference: number };
@@ -63,10 +61,10 @@ const PRESEED: MyListing[] = [
 ];
 
 const STATUS_CONFIG = {
-  active:   { label: "Listed · Active",   color: "#10b981", bg: "rgba(16,185,129,0.08)",  border: "rgba(16,185,129,0.2)" },
-  sold:     { label: "Sold ✓",            color: "#3b82f6", bg: "rgba(59,130,246,0.08)",  border: "rgba(59,130,246,0.2)" },
-  donated:  { label: "Donated ✓",         color: "#8b5cf6", bg: "rgba(139,92,246,0.08)", border: "rgba(139,92,246,0.2)" },
-  recycled: { label: "Recycled ✓",        color: "#14b8a6", bg: "rgba(20,184,166,0.08)", border: "rgba(20,184,166,0.2)" },
+  active:   { label: "Listed · Active",   color: AZ.green, bg: AZ.greenBg,  border: `${AZ.green}33` },
+  sold:     { label: "Sold ✓",            color: AZ.blue,  bg: "#E8F0F7",   border: `${AZ.blue}33` },
+  donated:  { label: "Donated ✓",         color: "#8b5cf6", bg: "#F3F0FB",  border: "#8b5cf633" },
+  recycled: { label: "Recycled ✓",        color: AZ.green, bg: AZ.greenBg,  border: `${AZ.green}33` },
 };
 
 function ListingCard({ listing, fullListing, onViewPassport }: { listing: MyListing; fullListing?: MarketplaceListing; onViewPassport?: () => void }) {
@@ -75,7 +73,7 @@ function ListingCard({ listing, fullListing, onViewPassport }: { listing: MyList
   const [notified, setNotified] = useState<string | null>(null);
 
   const statusCfg = STATUS_CONFIG[listing.status];
-  const gradeColor = GRADE_COLOR[listing.grade] ?? "#f59e0b";
+  const cond = CONDITION[listing.grade] ?? CONDITION["B+"];
   const discount = Math.round((1 - listing.asking_price / listing.mrp) * 100);
   const isDone = listing.status !== "active";
 
@@ -100,10 +98,10 @@ function ListingCard({ listing, fullListing, onViewPassport }: { listing: MyList
   }, [listing.id, listing.status]);
 
   return (
-    <div className="rounded-2xl overflow-hidden" style={{ background: "#111113", border: "1px solid #27272a", opacity: isDone ? 0.75 : 1 }}>
+    <div className="rounded-2xl overflow-hidden" style={{ background: AZ.card, border: `1px solid ${AZ.border}`, opacity: isDone ? 0.85 : 1 }}>
       <div className="flex gap-4 p-4">
         {/* Image */}
-        <div className="w-20 h-20 rounded-xl overflow-hidden flex-shrink-0" style={{ background: "#18181b" }}>
+        <div className="w-20 h-20 rounded-xl overflow-hidden flex-shrink-0" style={{ background: AZ.surfaceAlt }}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={listing.image} alt={listing.product_name} className="w-full h-full object-cover" style={{ filter: isDone ? "grayscale(40%)" : "none" }} />
         </div>
@@ -111,29 +109,29 @@ function ListingCard({ listing, fullListing, onViewPassport }: { listing: MyList
         {/* Info */}
         <div className="flex-1 min-w-0">
           <div className="flex items-start justify-between gap-2">
-            <p className="font-semibold text-sm leading-snug" style={{ color: "#fafafa", fontFamily: "Figtree, sans-serif" }}>{listing.product_name}</p>
+            <p className="font-semibold text-sm leading-snug" style={{ color: AZ.ink, fontFamily: "Figtree, sans-serif" }}>{listing.product_name}</p>
             <span className="flex-shrink-0 text-xs font-semibold px-2 py-0.5 rounded-lg" style={{ background: statusCfg.bg, border: `1px solid ${statusCfg.border}`, color: statusCfg.color, fontFamily: "Figtree, sans-serif" }}>
               {statusCfg.label}
             </span>
           </div>
 
           <div className="flex items-center gap-2 mt-1.5 flex-wrap">
-            <span className="text-xs font-bold px-2 py-0.5 rounded" style={{ background: `${gradeColor}18`, border: `1px solid ${gradeColor}40`, color: gradeColor, fontFamily: "Figtree, sans-serif" }}>
-              Grade {listing.grade}
+            <span className="text-xs font-bold px-2 py-0.5 rounded" style={{ background: cond.bg, border: `1px solid ${cond.color}40`, color: cond.color, fontFamily: "Figtree, sans-serif" }}>
+              Grade {listing.grade} · {cond.short}
             </span>
-            <span className="text-xs" style={{ color: "#52525b", fontFamily: "Figtree, sans-serif" }}>
+            <span className="text-xs" style={{ color: AZ.ink2, fontFamily: "Figtree, sans-serif" }}>
               ₹{listing.asking_price.toLocaleString("en-IN")} · -{discount}% off MRP
             </span>
           </div>
 
           <div className="flex items-center gap-3 mt-2">
-            <span className="text-xs font-semibold" style={{ color: "#10b981", fontFamily: "Figtree, sans-serif" }}>
-              ♻ {listing.circularity_score}/100
+            <span className="inline-flex items-center gap-1 text-xs font-semibold" style={{ color: AZ.green, fontFamily: "Figtree, sans-serif" }}>
+              <Recycle size={13} /> {listing.circularity_score}/100
             </span>
-            <span className="text-xs font-semibold" style={{ color: "#10b981", fontFamily: "Figtree, sans-serif" }}>
-              🌿 +{listing.green_credits} credits
+            <span className="inline-flex items-center gap-1 text-xs font-semibold" style={{ color: AZ.green, fontFamily: "Figtree, sans-serif" }}>
+              <Leaf size={13} /> +{listing.green_credits} credits
             </span>
-            <span className="text-xs" style={{ color: "#3f3f46", fontFamily: "Figtree, sans-serif" }}>
+            <span className="text-xs" style={{ color: AZ.ink2, fontFamily: "Figtree, sans-serif" }}>
               Listed {listing.listed_on}
             </span>
           </div>
@@ -142,11 +140,11 @@ function ListingCard({ listing, fullListing, onViewPassport }: { listing: MyList
 
       {/* Health card button */}
       {fullListing && onViewPassport && (
-        <div className="px-4 pb-3" style={{ borderTop: "1px solid #1c1c1e" }}>
+        <div className="px-4 pb-3" style={{ borderTop: `1px solid ${AZ.border}` }}>
           <button
             onClick={onViewPassport}
             className="w-full mt-3 text-xs font-semibold py-2 rounded-xl transition-all hover:opacity-80"
-            style={{ background: "#18181b", border: "1px solid #3f3f46", color: "#a1a1aa", fontFamily: "Figtree, sans-serif" }}
+            style={{ background: AZ.surfaceAlt, border: `1px solid ${AZ.border}`, color: AZ.link, fontFamily: "Figtree, sans-serif" }}
           >
             View Health Card →
           </button>
@@ -155,43 +153,43 @@ function ListingCard({ listing, fullListing, onViewPassport }: { listing: MyList
 
       {/* Active: buyer matches — always visible */}
       {listing.status === "active" && (
-        <div style={{ borderTop: "1px solid #1c1c1e" }}>
+        <div style={{ borderTop: `1px solid ${AZ.border}` }}>
           <div className="px-4 pt-3 pb-1">
-            <p className="text-xs font-semibold uppercase tracking-widest" style={{ color: "#52525b", fontFamily: "Figtree, sans-serif" }}>
+            <p className="text-xs font-semibold uppercase tracking-widest" style={{ color: AZ.ink2, fontFamily: "Figtree, sans-serif" }}>
               Next Best Owners · Notify to sell faster
             </p>
           </div>
           <div className="px-4 pb-4 space-y-2 mt-2">
             {loadingMatches ? (
-              <div className="space-y-2">{[1,2,3].map(i => <div key={i} className="h-12 rounded-xl" style={{ background: "#18181b", animation: "pulse 1.5s ease-in-out infinite" }} />)}</div>
+              <div className="space-y-2">{[1,2,3].map(i => <div key={i} className="h-12 rounded-xl" style={{ background: AZ.surfaceAlt, animation: "pulse 1.5s ease-in-out infinite" }} />)}</div>
             ) : matches.length === 0 ? (
-              <p className="text-xs text-center py-3" style={{ color: "#52525b" }}>Finding best matches…</p>
+              <p className="text-xs text-center py-3" style={{ color: AZ.ink2 }}>Finding best matches…</p>
             ) : matches.map((m, i) => (
               <div key={m.buyer.id} className="flex items-center justify-between rounded-xl p-3"
-                style={{ background: i === 0 ? "rgba(16,185,129,0.06)" : "#18181b", border: i === 0 ? "1px solid rgba(16,185,129,0.2)" : "1px solid #27272a" }}>
+                style={{ background: i === 0 ? AZ.greenBg : AZ.surfaceAlt, border: i === 0 ? `1px solid ${AZ.green}33` : `1px solid ${AZ.border}` }}>
                 <div className="flex items-center gap-3">
                   <div className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0"
-                    style={{ background: i === 0 ? "rgba(16,185,129,0.15)" : "#27272a", color: i === 0 ? "#10b981" : "#52525b", fontFamily: "Syne, sans-serif" }}>
+                    style={{ background: i === 0 ? `${AZ.green}26` : AZ.border, color: i === 0 ? AZ.green : AZ.ink2, fontFamily: "Syne, sans-serif" }}>
                     {m.buyer.name[0]}
                   </div>
                   <div>
-                    <p className="text-sm font-semibold" style={{ color: "#fafafa", fontFamily: "Figtree, sans-serif" }}>{m.buyer.name}</p>
-                    <p className="text-xs" style={{ color: "#52525b", fontFamily: "Figtree, sans-serif" }}>{m.reason}</p>
+                    <p className="text-sm font-semibold" style={{ color: AZ.ink, fontFamily: "Figtree, sans-serif" }}>{m.buyer.name}</p>
+                    <p className="text-xs" style={{ color: AZ.ink2, fontFamily: "Figtree, sans-serif" }}>{m.reason}</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-2 flex-shrink-0">
                   <div className="text-right">
-                    {i === 0 && <p className="text-xs font-semibold" style={{ color: "#10b981", fontFamily: "Figtree, sans-serif" }}>Best match</p>}
-                    <p className="font-bold text-sm" style={{ color: i === 0 ? "#10b981" : "#52525b", fontFamily: "Syne, sans-serif" }}>{m.score}pts</p>
+                    {i === 0 && <p className="text-xs font-semibold" style={{ color: AZ.green, fontFamily: "Figtree, sans-serif" }}>Best match</p>}
+                    <p className="font-bold text-sm" style={{ color: i === 0 ? AZ.green : AZ.ink2, fontFamily: "Syne, sans-serif" }}>{m.score}pts</p>
                   </div>
                   {notified === m.buyer.id ? (
-                    <span className="text-xs font-semibold px-2.5 py-1.5 rounded-lg" style={{ background: "rgba(16,185,129,0.1)", border: "1px solid rgba(16,185,129,0.2)", color: "#10b981", fontFamily: "Figtree, sans-serif" }}>
-                      ✓ Notified
+                    <span className="inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-1.5 rounded-lg" style={{ background: AZ.greenBg, border: `1px solid ${AZ.green}33`, color: AZ.green, fontFamily: "Figtree, sans-serif" }}>
+                      <BadgeCheck size={13} /> Notified
                     </span>
                   ) : (
                     <button onClick={() => setNotified(m.buyer.id)}
                       className="text-xs font-semibold px-2.5 py-1.5 rounded-lg transition-all hover:opacity-80"
-                      style={{ background: "#18181b", border: "1px solid #3f3f46", color: "#a1a1aa", fontFamily: "Figtree, sans-serif" }}>
+                      style={{ background: AZ.ctaYellow, border: `1px solid ${AZ.ctaYellowBorder}`, color: AZ.ink, fontFamily: "Figtree, sans-serif" }}>
                       Notify →
                     </button>
                   )}
@@ -303,52 +301,54 @@ export default function MyListingsPage() {
   }
 
   return (
-    <div className="max-w-2xl mx-auto px-5 py-10">
-      <div className="flex items-center gap-3 mb-8 animate-fade-up">
-        <Link href="/account" className="text-sm" style={{ color: "#52525b", fontFamily: "Figtree, sans-serif" }}>← Account</Link>
-        <span style={{ color: "#27272a" }}>|</span>
-        <div>
-          <h1 className="text-2xl font-bold" style={{ fontFamily: "Syne, sans-serif", color: "#fafafa" }}>My Listings</h1>
-          <p className="text-xs mt-0.5" style={{ color: "#52525b", fontFamily: "Figtree, sans-serif" }}>Items you returned — AI graded, listed, matched to buyers</p>
+    <div style={{ background: AZ.page, minHeight: "100%" }}>
+      <div className="max-w-2xl mx-auto px-5 py-10">
+        <div className="flex items-center gap-3 mb-8 animate-fade-up">
+          <Link href="/account" className="inline-flex items-center gap-1 text-sm" style={{ color: AZ.link, fontFamily: "Figtree, sans-serif" }}><ArrowLeft size={14} /> Account</Link>
+          <span style={{ color: AZ.border }}>|</span>
+          <div>
+            <h1 className="text-2xl font-bold" style={{ fontFamily: "Syne, sans-serif", color: AZ.ink }}>My Listings</h1>
+            <p className="text-xs mt-0.5" style={{ color: AZ.ink2, fontFamily: "Figtree, sans-serif" }}>Items you returned — AI graded, listed, matched to buyers</p>
+          </div>
         </div>
+
+        {allActive.length > 0 && (
+          <div className="mb-8 animate-fade-up">
+            <p className="text-xs font-semibold uppercase tracking-widest mb-3" style={{ color: AZ.ink2, fontFamily: "Figtree, sans-serif" }}>Active · {allActive.length}</p>
+            <div className="space-y-3">
+              {allActive.map(l => {
+                const full = getFullListing(l);
+                return <ListingCard key={l.id} listing={l} fullListing={full} onViewPassport={full ? () => setPassportListing(full) : undefined} />;
+              })}
+            </div>
+          </div>
+        )}
+
+        {done.length > 0 && (
+          <div className="animate-fade-up delay-1">
+            <p className="text-xs font-semibold uppercase tracking-widest mb-3" style={{ color: AZ.ink2, fontFamily: "Figtree, sans-serif" }}>Completed · {done.length}</p>
+            <div className="space-y-3">
+              {done.map(l => {
+                const full = getFullListing(l);
+                return <ListingCard key={l.id} listing={l} fullListing={full} onViewPassport={full ? () => setPassportListing(full) : undefined} />;
+              })}
+            </div>
+          </div>
+        )}
+
+        {passportListing && (
+          <PassportModal listing={passportListing} onClose={() => setPassportListing(null)} hideBuyButton />
+        )}
+
+        {totalCount === 0 && (
+          <div className="text-center py-20">
+            <Package size={40} color={AZ.ink2} className="mx-auto mb-3" />
+            <p className="font-semibold" style={{ color: AZ.ink, fontFamily: "Figtree, sans-serif" }}>No listings yet</p>
+            <p className="text-sm mt-1" style={{ color: AZ.ink2, fontFamily: "Figtree, sans-serif" }}>Return an item to see it listed here</p>
+            <Link href="/account" className="inline-block mt-4 text-sm font-semibold" style={{ color: AZ.link, fontFamily: "Figtree, sans-serif" }}>Start a return →</Link>
+          </div>
+        )}
       </div>
-
-      {allActive.length > 0 && (
-        <div className="mb-8 animate-fade-up">
-          <p className="text-xs font-semibold uppercase tracking-widest mb-3" style={{ color: "#52525b", fontFamily: "Figtree, sans-serif" }}>Active · {allActive.length}</p>
-          <div className="space-y-3">
-            {allActive.map(l => {
-              const full = getFullListing(l);
-              return <ListingCard key={l.id} listing={l} fullListing={full} onViewPassport={full ? () => setPassportListing(full) : undefined} />;
-            })}
-          </div>
-        </div>
-      )}
-
-      {done.length > 0 && (
-        <div className="animate-fade-up delay-1">
-          <p className="text-xs font-semibold uppercase tracking-widest mb-3" style={{ color: "#52525b", fontFamily: "Figtree, sans-serif" }}>Completed · {done.length}</p>
-          <div className="space-y-3">
-            {done.map(l => {
-              const full = getFullListing(l);
-              return <ListingCard key={l.id} listing={l} fullListing={full} onViewPassport={full ? () => setPassportListing(full) : undefined} />;
-            })}
-          </div>
-        </div>
-      )}
-
-      {passportListing && (
-        <PassportModal listing={passportListing} onClose={() => setPassportListing(null)} hideBuyButton />
-      )}
-
-      {totalCount === 0 && (
-        <div className="text-center py-20">
-          <p className="text-4xl mb-3">📦</p>
-          <p className="font-semibold" style={{ color: "#fafafa", fontFamily: "Figtree, sans-serif" }}>No listings yet</p>
-          <p className="text-sm mt-1" style={{ color: "#52525b", fontFamily: "Figtree, sans-serif" }}>Return an item to see it listed here</p>
-          <Link href="/account" className="inline-block mt-4 text-sm font-semibold" style={{ color: "#10b981", fontFamily: "Figtree, sans-serif" }}>Start a return →</Link>
-        </div>
-      )}
     </div>
   );
 }

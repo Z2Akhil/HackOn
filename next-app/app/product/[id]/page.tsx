@@ -1,15 +1,12 @@
 import { getProducts } from "@/lib/data";
 import { notFound } from "next/navigation";
 import PreventionBanner from "@/components/PreventionBanner";
+import StarRating from "@/components/StarRating";
+import AddToCartButtons from "@/components/AddToCartButtons";
 import Link from "next/link";
-
-function categoryEmoji(cat: string) {
-  const map: Record<string, string> = {
-    electronics: "📱", apparel: "👕", home_appliances: "🏠",
-    home: "🛋️", accessories: "⌚", beauty: "💄", sports: "🏃",
-  };
-  return map[cat] ?? "📦";
-}
+import { AZ } from "@/lib/ui-theme";
+import { ratingFor, reviewCountFor, formatCount } from "@/lib/ratings";
+import { ChevronRight, ShieldCheck, Truck, RotateCcw, Leaf } from "lucide-react";
 
 const CATEGORY_LABEL: Record<string, string> = {
   electronics: "Electronics", apparel: "Apparel", home_appliances: "Home Appliances",
@@ -22,74 +19,97 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
   const product = products.find((p) => p.id === id);
   if (!product) notFound();
 
-  return (
-    <div className="max-w-5xl mx-auto px-5 py-10">
-      <Link href="/" className="inline-flex items-center gap-1.5 text-sm mb-8 transition-colors" style={{ color: "#52525b", fontFamily: "Figtree, sans-serif" }}>
-        <span>←</span> Back to catalog
-      </Link>
+  const rating = ratingFor(product.id, "A");
+  const reviews = reviewCountFor(product.id, "A");
+  const openBox = Math.round(product.mrp * 0.72);
 
-      <div className="grid md:grid-cols-2 gap-10">
-        {/* Image */}
-        <div className="animate-fade-up">
-          <div className="aspect-square rounded-2xl flex items-center justify-center text-[120px] relative overflow-hidden" style={{ background: "#111113", border: "1px solid #27272a" }}>
-            <div className="absolute inset-0" style={{ background: "radial-gradient(ellipse at center, rgba(16,185,129,0.05), transparent 70%)" }} />
-            {product.image
-              // eslint-disable-next-line @next/next/no-img-element
-              ? <img src={product.image} alt={product.name} className="w-full h-full object-cover rounded-2xl" />
-              : categoryEmoji(product.category)
-            }
-          </div>
+  return (
+    <div style={{ background: AZ.page, minHeight: "100%" }}>
+      <div className="max-w-6xl mx-auto px-4 py-4" style={{ fontFamily: "Figtree, sans-serif" }}>
+        {/* Breadcrumb */}
+        <div className="flex items-center gap-1 text-xs mb-3" style={{ color: AZ.ink2 }}>
+          <Link href="/" style={{ color: AZ.link }}>Home</Link>
+          <ChevronRight size={12} />
+          <span>{CATEGORY_LABEL[product.category] ?? product.category}</span>
+          <ChevronRight size={12} />
+          <span className="truncate" style={{ color: AZ.ink }}>{product.name}</span>
         </div>
 
-        {/* Product info */}
-        <div className="flex flex-col gap-5 animate-fade-up delay-1">
-          <div>
-            <span className="text-xs font-semibold uppercase tracking-widest" style={{ color: "#52525b", fontFamily: "Figtree, sans-serif" }}>
-              {CATEGORY_LABEL[product.category] ?? product.category}
-            </span>
-            <h1 className="text-3xl font-bold mt-2 mb-1" style={{ fontFamily: "Syne, sans-serif", color: "#fafafa", letterSpacing: "-0.02em" }}>
-              {product.name}
-            </h1>
-            <div className="flex items-baseline gap-3 mt-3">
-              <span className="text-4xl font-bold" style={{ fontFamily: "Syne, sans-serif", color: "#fafafa" }}>
-                ₹{product.mrp.toLocaleString("en-IN")}
-              </span>
-              <span className="text-sm" style={{ color: "#52525b", fontFamily: "Figtree, sans-serif" }}>incl. all taxes</span>
+        <div className="rounded-lg grid md:grid-cols-12 gap-6 p-5" style={{ background: AZ.card, border: `1px solid ${AZ.border}` }}>
+          {/* Image */}
+          <div className="md:col-span-5">
+            <div className="aspect-square rounded-md flex items-center justify-center" style={{ background: "#fff", border: `1px solid ${AZ.border}`, padding: 20 }}>
+              {product.image ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={product.image} alt={product.name} className="max-w-full max-h-full object-contain mix-blend-multiply" />
+              ) : <span style={{ color: AZ.ink2 }}>No image</span>}
             </div>
           </div>
 
-          {/* Prevention banner */}
-          <PreventionBanner
-            productId={product.id}
-            category={product.category}
-            topReturnReason={product.top_return_reason}
-          />
-
-          {/* Actions */}
-          <div className="flex gap-3">
-            <button className="flex-1 font-semibold py-3.5 rounded-xl transition-all hover:opacity-90 active:scale-[0.98]" style={{ background: "#f59e0b", color: "#0c0c0e", fontFamily: "Figtree, sans-serif", fontSize: "15px" }}>
-              Add to Cart
-            </button>
-            <button className="flex-1 font-semibold py-3.5 rounded-xl transition-all hover:opacity-80" style={{ background: "#18181b", color: "#fafafa", border: "1px solid #3f3f46", fontFamily: "Figtree, sans-serif", fontSize: "15px" }}>
-              Buy Now
-            </button>
-          </div>
-
-
-
-          {/* Product stats */}
-          <div className="grid grid-cols-3 gap-2">
-            {[
-              { label: "Return Rate", value: `${Math.round(product.avg_return_rate * 100)}%` },
-              { label: "Top Reason", value: product.top_return_reason.replace("_", " ") },
-              { label: "AI Graded", value: "✓ Live" },
-            ].map((s) => (
-              <div key={s.label} className="rounded-lg p-3 text-center" style={{ background: "#111113", border: "1px solid #27272a" }}>
-                <div className="text-sm font-bold" style={{ color: "#fafafa", fontFamily: "Syne, sans-serif" }}>{s.value}</div>
-                <div className="text-xs mt-0.5" style={{ color: "#52525b", fontFamily: "Figtree, sans-serif" }}>{s.label}</div>
+          {/* Title + rating + prevention */}
+          <div className="md:col-span-4 flex flex-col gap-3">
+            <h1 className="text-2xl font-bold" style={{ fontFamily: "Syne, sans-serif", color: AZ.ink }}>{product.name}</h1>
+            <div className="flex items-center gap-2">
+              <StarRating rating={rating} size={15} showValue />
+              <span className="text-sm hover:underline" style={{ color: AZ.link }}>{formatCount(reviews)} ratings</span>
+            </div>
+            <div style={{ borderTop: `1px solid ${AZ.border}`, paddingTop: 12 }}>
+              <span className="text-3xl font-bold" style={{ color: AZ.priceRed }}>
+                <span className="text-sm align-top">₹</span>{product.mrp.toLocaleString("en-IN")}
+              </span>
+              <span className="text-xs ml-2" style={{ color: AZ.ink2 }}>incl. all taxes</span>
+              <div className="text-xs mt-1" style={{ color: AZ.ink2 }}>
+                M.R.P.: <span className="line-through">₹{product.mrp.toLocaleString("en-IN")}</span>
               </div>
-            ))}
+            </div>
+
+            <PreventionBanner productId={product.id} category={product.category} topReturnReason={product.top_return_reason} />
+
+            {/* Trust row */}
+            <div className="grid grid-cols-3 gap-2 mt-1">
+              {[
+                { Icon: ShieldCheck, label: "AI Graded" },
+                { Icon: RotateCcw, label: "Easy Returns" },
+                { Icon: Leaf, label: "Second Life" },
+              ].map(({ Icon, label }) => (
+                <div key={label} className="flex flex-col items-center gap-1 text-center">
+                  <Icon size={18} color={AZ.green} />
+                  <span className="text-xs" style={{ color: AZ.ink2 }}>{label}</span>
+                </div>
+              ))}
+            </div>
           </div>
+
+          {/* Buy box */}
+          <div className="md:col-span-3">
+            <div className="rounded-lg p-4 flex flex-col gap-2" style={{ border: `1px solid ${AZ.border}` }}>
+              <span className="text-2xl font-bold" style={{ color: AZ.priceRed }}>
+                <span className="text-sm align-top">₹</span>{product.mrp.toLocaleString("en-IN")}
+              </span>
+              <div className="flex items-center gap-1 text-xs" style={{ color: AZ.ink2 }}>
+                <Truck size={13} /> FREE delivery
+              </div>
+              <p className="text-sm font-semibold" style={{ color: AZ.green }}>In stock</p>
+              <AddToCartButtons item={{ id: product.id, name: product.name, price: product.mrp, mrp: product.mrp, image: product.image }} />
+              <Link href="/marketplace" className="text-xs text-center mt-1 hover:underline" style={{ color: AZ.link }}>
+                See open-box from ₹{openBox.toLocaleString("en-IN")} →
+              </Link>
+            </div>
+          </div>
+        </div>
+
+        {/* Product stats */}
+        <div className="rounded-lg mt-4 p-5 grid grid-cols-3 gap-4" style={{ background: AZ.card, border: `1px solid ${AZ.border}` }}>
+          {[
+            { label: "Category Return Rate", value: `${Math.round(product.avg_return_rate * 100)}%` },
+            { label: "Top Return Reason", value: product.top_return_reason.replace(/_/g, " ") },
+            { label: "AI Grading", value: "Live" },
+          ].map((s) => (
+            <div key={s.label} className="text-center">
+              <div className="text-lg font-bold capitalize" style={{ color: AZ.ink, fontFamily: "Syne, sans-serif" }}>{s.value}</div>
+              <div className="text-xs mt-0.5" style={{ color: AZ.ink2 }}>{s.label}</div>
+            </div>
+          ))}
         </div>
       </div>
     </div>

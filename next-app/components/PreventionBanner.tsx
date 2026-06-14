@@ -1,6 +1,8 @@
 "use client";
 import { useEffect, useState } from "react";
 import { PreventionScore } from "@/types";
+import { AZ } from "@/lib/ui-theme";
+import { AlertTriangle } from "lucide-react";
 
 // Pre-computed from returns_train.csv (2000 rows) — category × reason frequency
 const CATEGORY_STATS: Record<string, { reason: string; pct: number }> = {
@@ -79,33 +81,29 @@ export default function PreventionBanner({
       .finally(() => setLoading(false));
   }, [productId, category]);
 
-  if (loading) return <div className="h-24 rounded-xl skeleton" />;
+  if (loading) return <div className="h-24 rounded-lg skeleton" />;
   if (!score || score.recommended_intervention === "none") return null;
 
   const isHighRisk = score.recommended_intervention === "show_banner_with_variant_suggestion";
   const note = getNote(category, topReturnReason);
+  const accent = isHighRisk ? AZ.red : AZ.amber;
+  const accentBg = isHighRisk ? AZ.redBg : AZ.amberBg;
 
   return (
-    <div
-      className="rounded-xl p-4 animate-fade-in"
-      style={{
-        background: "#111113",
-        border: "1px solid #27272a",
-      }}
-    >
+    <div className="rounded-lg p-3 animate-fade-in" style={{ background: accentBg, border: `1px solid ${accent}33` }}>
       {/* Header */}
-      <div className="flex items-center gap-2 mb-3">
-        <div className="w-1.5 h-1.5 rounded-full" style={{ background: isHighRisk ? "#ef4444" : "#f59e0b" }} />
-        <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: "#52525b", fontFamily: "Figtree, sans-serif" }}>
-          Buyer Insight · AI
+      <div className="flex items-center gap-1.5 mb-1.5">
+        <AlertTriangle size={14} color={accent} />
+        <span className="text-xs font-bold uppercase tracking-wide" style={{ color: accent, fontFamily: "Figtree, sans-serif" }}>
+          Buyer Insight · AI Return Prevention
         </span>
       </div>
 
       {/* Note content */}
-      <p className="text-sm font-semibold mb-1" style={{ color: "#fafafa", fontFamily: "Figtree, sans-serif" }}>
+      <p className="text-sm font-semibold mb-1" style={{ color: AZ.ink, fontFamily: "Figtree, sans-serif" }}>
         {note.headline}
       </p>
-      <p className="text-xs leading-relaxed" style={{ color: "#71717a", fontFamily: "Figtree, sans-serif" }}>
+      <p className="text-xs leading-relaxed" style={{ color: AZ.ink2, fontFamily: "Figtree, sans-serif" }}>
         {note.detail}
       </p>
     </div>

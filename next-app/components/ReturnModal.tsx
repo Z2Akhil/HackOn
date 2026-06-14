@@ -5,6 +5,8 @@ import { GradeResult, DispositionResult } from "@/types";
 import GradeCard from "@/components/GradeCard";
 import DispositionCard from "@/components/DispositionCard";
 import { storeVideo } from "@/lib/video-store";
+import { AZ } from "@/lib/ui-theme";
+import { Check } from "lucide-react";
 
 const CDN = "https://cdn.dummyjson.com/product-images";
 export const DEMO_ORDERS = [
@@ -47,7 +49,7 @@ type Step = "reason" | "upload" | "extracting" | "grading" | "result";
 
 const DECISION_CONFIG = {
   resell: {
-    icon: "🏷️", color: "#10b981", bg: "rgba(16,185,129,0.08)", border: "rgba(16,185,129,0.2)",
+    icon: "🏷️", color: AZ.green, bg: AZ.greenBg, border: AZ.border,
     title: "Listed on Marketplace",
     badge: (d: DispositionResult) => `+${d.green_credits ?? 50} Green Credits earned`,
     body: (d: DispositionResult) => `Your item is now live on the ReLoop marketplace as an AI-certified open-box listing. It has also been saved to your My Listings page. You'll receive ₹${d.estimated_recovery?.toLocaleString("en-IN")} once a buyer is matched and the sale completes.`,
@@ -55,7 +57,7 @@ const DECISION_CONFIG = {
     cta: "View in My Listings →", ctaHref: "/my-listings",
   },
   refurbish: {
-    icon: "🔧", color: "#3b82f6", bg: "rgba(59,130,246,0.08)", border: "rgba(59,130,246,0.2)",
+    icon: "🔧", color: AZ.blue, bg: "#EAF1F8", border: AZ.border,
     title: "Sent for Refurbishment",
     badge: () => "Est. ready in 5–7 days",
     body: (d: DispositionResult) => `Your item has been queued for professional repair and quality certification. Once certified, it will be listed on the marketplace as 'Certified Refurbished' and appear in your My Listings page. Estimated recovery: ₹${d.estimated_recovery?.toLocaleString("en-IN")}.`,
@@ -63,7 +65,7 @@ const DECISION_CONFIG = {
     cta: "View in My Listings →", ctaHref: "/my-listings",
   },
   donate: {
-    icon: "🤝", color: "#8b5cf6", bg: "rgba(139,92,246,0.08)", border: "rgba(139,92,246,0.2)",
+    icon: "🤝", color: "#7C3AED", bg: "#F2EDFB", border: AZ.border,
     title: "Donation Scheduled",
     badge: () => "Tax receipt incoming",
     body: () => "Pickup arranged with NGO partner GreenMitra Foundation within 2–3 days. A tax exemption receipt will be emailed to your registered address.",
@@ -71,7 +73,7 @@ const DECISION_CONFIG = {
     cta: "Done", ctaHref: null,
   },
   recycle: {
-    icon: "♻️", color: "#14b8a6", bg: "rgba(20,184,166,0.08)", border: "rgba(20,184,166,0.2)",
+    icon: "♻️", color: AZ.green, bg: AZ.greenBg, border: AZ.border,
     title: "Recycling Initiated",
     badge: (d: DispositionResult) => `${d.co2_saved_kg} kg CO₂ prevented`,
     body: () => "Material recovery team will collect within 3–5 days. All hazardous components safely processed per e-waste norms. Raw materials re-enter manufacturing supply chain.",
@@ -79,7 +81,7 @@ const DECISION_CONFIG = {
     cta: "Done", ctaHref: null,
   },
   exchange: {
-    icon: "🔄", color: "#f59e0b", bg: "rgba(245,158,11,0.08)", border: "rgba(245,158,11,0.2)",
+    icon: "🔄", color: AZ.amber, bg: AZ.amberBg, border: AZ.border,
     title: "Replacement Dispatched",
     badge: () => "Arrives in 2–3 days",
     body: () => "A new unit has been dispatched. Please keep your OTP ready for delivery verification. The returned item undergoes refurbishment before re-entering the supply chain.",
@@ -98,45 +100,45 @@ function KeepItPanel({
   onDecline: () => void;
 }) {
   return (
-    <div className="rounded-2xl overflow-hidden animate-fade-up" style={{ border: "1px solid rgba(16,185,129,0.35)" }}>
+    <div className="rounded-2xl overflow-hidden animate-fade-up" style={{ border: `1px solid ${AZ.green}` }}>
       {/* Header band */}
-      <div className="px-5 py-4 flex items-center gap-3" style={{ background: "rgba(16,185,129,0.1)" }}>
+      <div className="px-5 py-4 flex items-center gap-3" style={{ background: AZ.greenBg }}>
         <span className="text-2xl">💚</span>
         <div className="flex-1">
-          <p className="font-bold" style={{ color: "#fafafa", fontFamily: "Syne, sans-serif" }}>Keep It & Get Cash Back</p>
-          <span className="text-xs font-semibold" style={{ color: "#10b981", fontFamily: "Figtree, sans-serif" }}>
+          <p className="font-bold" style={{ color: AZ.ink, fontFamily: "Syne, sans-serif" }}>Keep It & Get Cash Back</p>
+          <span className="text-xs font-semibold" style={{ color: AZ.green, fontFamily: "Figtree, sans-serif" }}>
             Smartest option · no shipping needed
           </span>
         </div>
-        <span className="text-xs px-2 py-0.5 rounded font-semibold" style={{ background: "rgba(16,185,129,0.15)", color: "#10b981", border: "1px solid rgba(16,185,129,0.3)", fontFamily: "Figtree, sans-serif" }}>
+        <span className="text-xs px-2 py-0.5 rounded font-semibold" style={{ background: AZ.card, color: AZ.green, border: `1px solid ${AZ.green}`, fontFamily: "Figtree, sans-serif" }}>
           AI Offer
         </span>
       </div>
 
       {/* Body */}
-      <div className="px-5 py-4 space-y-4" style={{ background: "#0c0c0e" }}>
+      <div className="px-5 py-4 space-y-4" style={{ background: AZ.card }}>
         {/* Big refund number */}
-        <div className="rounded-xl p-4 text-center" style={{ background: "rgba(16,185,129,0.06)", border: "1px solid rgba(16,185,129,0.15)" }}>
-          <p className="text-xs font-semibold uppercase tracking-widest" style={{ color: "#10b981", fontFamily: "Figtree, sans-serif" }}>Instant partial refund</p>
-          <p className="text-4xl font-black mt-1" style={{ color: "#10b981", fontFamily: "Syne, sans-serif" }}>
+        <div className="rounded-xl p-4 text-center" style={{ background: AZ.greenBg, border: `1px solid ${AZ.border}` }}>
+          <p className="text-xs font-semibold uppercase tracking-widest" style={{ color: AZ.green, fontFamily: "Figtree, sans-serif" }}>Instant partial refund</p>
+          <p className="text-4xl font-black mt-1" style={{ color: AZ.green, fontFamily: "Syne, sans-serif" }}>
             ₹{offer.refund_amount.toLocaleString("en-IN")}
           </p>
-          <p className="text-xs mt-1" style={{ color: "#52525b", fontFamily: "Figtree, sans-serif" }}>credited the moment you accept</p>
+          <p className="text-xs mt-1" style={{ color: AZ.ink2, fontFamily: "Figtree, sans-serif" }}>credited the moment you accept</p>
         </div>
 
-        <p className="text-xs leading-relaxed" style={{ color: "#a1a1aa", fontFamily: "Figtree, sans-serif" }}>
+        <p className="text-xs leading-relaxed" style={{ color: AZ.ink2, fontFamily: "Figtree, sans-serif" }}>
           {offer.reasoning}
         </p>
 
         {/* Meta pills */}
         <div className="flex flex-wrap gap-2">
-          <span className="text-xs font-semibold px-2.5 py-1 rounded-lg" style={{ background: "rgba(16,185,129,0.08)", border: "1px solid rgba(16,185,129,0.2)", color: "#10b981", fontFamily: "Figtree, sans-serif" }}>
+          <span className="text-xs font-semibold px-2.5 py-1 rounded-lg" style={{ background: AZ.greenBg, border: `1px solid ${AZ.border}`, color: AZ.green, fontFamily: "Figtree, sans-serif" }}>
             +{offer.green_credits} green credits
           </span>
-          <span className="text-xs font-semibold px-2.5 py-1 rounded-lg" style={{ background: "rgba(16,185,129,0.08)", border: "1px solid rgba(16,185,129,0.2)", color: "#10b981", fontFamily: "Figtree, sans-serif" }}>
+          <span className="text-xs font-semibold px-2.5 py-1 rounded-lg" style={{ background: AZ.greenBg, border: `1px solid ${AZ.border}`, color: AZ.green, fontFamily: "Figtree, sans-serif" }}>
             {offer.co2_saved_kg} kg CO₂ saved
           </span>
-          <span className="text-xs font-semibold px-2.5 py-1 rounded-lg" style={{ background: "#18181b", border: "1px solid #27272a", color: "#71717a", fontFamily: "Figtree, sans-serif" }}>
+          <span className="text-xs font-semibold px-2.5 py-1 rounded-lg" style={{ background: AZ.surfaceAlt, border: `1px solid ${AZ.border}`, color: AZ.ink2, fontFamily: "Figtree, sans-serif" }}>
             no pickup · no wait
           </span>
         </div>
@@ -145,15 +147,15 @@ function KeepItPanel({
         <div className="flex gap-3 pt-1">
           <button
             onClick={onAccept}
-            className="flex-1 font-semibold py-3 rounded-xl transition-all hover:opacity-90 active:scale-[0.98]"
-            style={{ background: "#10b981", color: "#0c0c0e", fontFamily: "Figtree, sans-serif" }}
+            className="flex-1 font-semibold py-3 rounded-full transition-all hover:opacity-90 active:scale-[0.98]"
+            style={{ background: AZ.ctaYellow, border: `1px solid ${AZ.ctaYellowBorder}`, color: AZ.ink, fontFamily: "Figtree, sans-serif" }}
           >
             Accept ₹{offer.refund_amount.toLocaleString("en-IN")} & Keep It
           </button>
           <button
             onClick={onDecline}
-            className="px-4 py-3 rounded-xl text-sm font-semibold transition-all hover:opacity-80"
-            style={{ background: "#18181b", color: "#a1a1aa", border: "1px solid #3f3f46", fontFamily: "Figtree, sans-serif" }}
+            className="px-4 py-3 rounded-full text-sm font-semibold transition-all hover:opacity-80"
+            style={{ background: AZ.card, color: AZ.ink, border: `1px solid ${AZ.border}`, fontFamily: "Figtree, sans-serif" }}
           >
             No, return it
           </button>
@@ -165,27 +167,27 @@ function KeepItPanel({
 
 function KeepItAcceptedPanel({ offer, onClose }: { offer: NonNullable<DispositionResult["keep_it"]>; onClose: () => void }) {
   return (
-    <div className="rounded-2xl overflow-hidden animate-fade-up" style={{ border: "1px solid rgba(16,185,129,0.35)" }}>
-      <div className="px-5 py-4 flex items-center gap-3" style={{ background: "rgba(16,185,129,0.1)" }}>
+    <div className="rounded-2xl overflow-hidden animate-fade-up" style={{ border: `1px solid ${AZ.green}` }}>
+      <div className="px-5 py-4 flex items-center gap-3" style={{ background: AZ.greenBg }}>
         <span className="text-2xl">🎉</span>
         <div className="flex-1">
-          <p className="font-bold" style={{ color: "#fafafa", fontFamily: "Syne, sans-serif" }}>Return Prevented!</p>
-          <span className="text-xs font-semibold" style={{ color: "#10b981", fontFamily: "Figtree, sans-serif" }}>
+          <p className="font-bold" style={{ color: AZ.ink, fontFamily: "Syne, sans-serif" }}>Return Prevented!</p>
+          <span className="text-xs font-semibold" style={{ color: AZ.green, fontFamily: "Figtree, sans-serif" }}>
             ₹{offer.refund_amount.toLocaleString("en-IN")} refunded · item is yours to keep
           </span>
         </div>
-        <div className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold" style={{ background: "#10b981", color: "#0c0c0e" }}>✓</div>
+        <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ background: AZ.green, color: "#fff" }}><Check size={16} strokeWidth={3} /></div>
       </div>
-      <div className="px-5 py-4 space-y-4" style={{ background: "#0c0c0e" }}>
-        <p className="text-xs leading-relaxed" style={{ color: "#a1a1aa", fontFamily: "Figtree, sans-serif" }}>
+      <div className="px-5 py-4 space-y-4" style={{ background: AZ.card }}>
+        <p className="text-xs leading-relaxed" style={{ color: AZ.ink2, fontFamily: "Figtree, sans-serif" }}>
           ₹{offer.refund_amount.toLocaleString("en-IN")} has been credited to your account and {offer.green_credits} green credits added.
           Nothing needs to be shipped — you keep the item. This avoided {offer.co2_saved_kg} kg of CO₂ from reverse logistics
           and saved ReLoop ₹{offer.seller_saves.toLocaleString("en-IN")} in handling costs.
         </p>
         <button
           onClick={onClose}
-          className="w-full font-semibold py-3 rounded-xl transition-all hover:opacity-90 active:scale-[0.98]"
-          style={{ background: "#10b981", color: "#0c0c0e", fontFamily: "Figtree, sans-serif" }}
+          className="w-full font-semibold py-3 rounded-full transition-all hover:opacity-90 active:scale-[0.98]"
+          style={{ background: AZ.ctaYellow, border: `1px solid ${AZ.ctaYellowBorder}`, color: AZ.ink, fontFamily: "Figtree, sans-serif" }}
         >
           Done
         </button>
@@ -221,17 +223,17 @@ function NextStepPanel({
       <div className="px-5 py-4 flex items-center gap-3" style={{ background: cfg.bg }}>
         <span className="text-2xl">{cfg.icon}</span>
         <div className="flex-1">
-          <p className="font-bold" style={{ color: "#fafafa", fontFamily: "Syne, sans-serif" }}>{cfg.title}</p>
+          <p className="font-bold" style={{ color: AZ.ink, fontFamily: "Syne, sans-serif" }}>{cfg.title}</p>
           <span className="text-xs font-semibold" style={{ color: cfg.color, fontFamily: "Figtree, sans-serif" }}>
             {cfg.badge(disposition)}
           </span>
         </div>
-        <div className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold" style={{ background: cfg.color, color: "#0c0c0e" }}>✓</div>
+        <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ background: cfg.color, color: "#fff" }}><Check size={16} strokeWidth={3} /></div>
       </div>
 
       {/* Body */}
-      <div className="px-5 py-4 space-y-4" style={{ background: "#0c0c0e" }}>
-        <p className="text-xs leading-relaxed" style={{ color: "#a1a1aa", fontFamily: "Figtree, sans-serif" }}>
+      <div className="px-5 py-4 space-y-4" style={{ background: AZ.card }}>
+        <p className="text-xs leading-relaxed" style={{ color: AZ.ink2, fontFamily: "Figtree, sans-serif" }}>
           {cfg.body(disposition)}
         </p>
 
@@ -249,8 +251,8 @@ function NextStepPanel({
           <button
             onClick={handleList}
             disabled={listState === "saving"}
-            className="w-full font-semibold py-3 rounded-xl transition-all hover:opacity-90 active:scale-[0.98] disabled:opacity-60"
-            style={{ background: cfg.color, color: "#0c0c0e", fontFamily: "Figtree, sans-serif" }}
+            className="w-full font-semibold py-3 rounded-full transition-all hover:opacity-90 active:scale-[0.98] disabled:opacity-60"
+            style={{ background: AZ.ctaYellow, border: `1px solid ${AZ.ctaYellowBorder}`, color: AZ.ink, fontFamily: "Figtree, sans-serif" }}
           >
             {listState === "saving" ? "Listing…" : "List on Marketplace →"}
           </button>
@@ -258,17 +260,17 @@ function NextStepPanel({
 
         {/* Listed confirmation */}
         {isListable && listState === "done" && (
-          <div className="rounded-xl p-3 space-y-2" style={{ background: "rgba(16,185,129,0.08)", border: "1px solid rgba(16,185,129,0.2)" }}>
-            <p className="text-xs font-semibold" style={{ color: "#10b981", fontFamily: "Figtree, sans-serif" }}>
+          <div className="rounded-xl p-3 space-y-2" style={{ background: AZ.greenBg, border: `1px solid ${AZ.border}` }}>
+            <p className="text-xs font-semibold" style={{ color: AZ.green, fontFamily: "Figtree, sans-serif" }}>
               ✓ Listed on Marketplace · Added to My Listings
             </p>
-            <p className="text-xs" style={{ color: "#52525b", fontFamily: "Figtree, sans-serif" }}>
+            <p className="text-xs" style={{ color: AZ.ink2, fontFamily: "Figtree, sans-serif" }}>
               Your inspection photos are now public. Buyers are being matched.
             </p>
             <button
               onClick={() => { onClose(); router.push("/my-listings"); }}
               className="text-xs font-semibold underline"
-              style={{ color: "#10b981", fontFamily: "Figtree, sans-serif" }}
+              style={{ color: AZ.link, fontFamily: "Figtree, sans-serif" }}
             >
               View in My Listings →
             </button>
@@ -279,8 +281,8 @@ function NextStepPanel({
         {!isListable && (
           <button
             onClick={() => { onClose(); if (cfg.ctaHref) router.push(cfg.ctaHref); }}
-            className="w-full font-semibold py-3 rounded-xl transition-all hover:opacity-90 active:scale-[0.98]"
-            style={{ background: cfg.color, color: "#0c0c0e", fontFamily: "Figtree, sans-serif" }}
+            className="w-full font-semibold py-3 rounded-full transition-all hover:opacity-90 active:scale-[0.98]"
+            style={{ background: AZ.ctaYellow, border: `1px solid ${AZ.ctaYellowBorder}`, color: AZ.ink, fontFamily: "Figtree, sans-serif" }}
           >
             {cfg.cta}
           </button>
@@ -501,25 +503,25 @@ export default function ReturnModal({ order, onClose }: { order: Order; onClose:
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4" style={{ background: "rgba(0,0,0,0.7)", backdropFilter: "blur(8px)" }}>
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4" style={{ background: "rgba(15,17,17,0.5)", backdropFilter: "blur(8px)" }}>
       <div
         className="w-full sm:max-w-lg max-h-[92vh] overflow-y-auto rounded-t-2xl sm:rounded-2xl"
-        style={{ background: "#0c0c0e", border: "1px solid #27272a" }}
+        style={{ background: AZ.card, border: `1px solid ${AZ.border}` }}
       >
         {/* Modal header */}
-        <div className="sticky top-0 z-10 flex items-center justify-between px-5 py-4" style={{ background: "#0c0c0e", borderBottom: "1px solid #18181b" }}>
+        <div className="sticky top-0 z-10 flex items-center justify-between px-5 py-4" style={{ background: AZ.card, borderBottom: `1px solid ${AZ.border}` }}>
           <div className="flex items-center gap-3">
             {/* Order thumbnail */}
-            <div className="w-9 h-9 rounded-lg overflow-hidden flex-shrink-0" style={{ background: "#18181b" }}>
+            <div className="w-9 h-9 rounded-lg overflow-hidden flex-shrink-0" style={{ background: AZ.surfaceAlt }}>
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={order.image} alt={order.product_name} className="w-full h-full object-cover" />
             </div>
             <div>
-              <p className="text-sm font-semibold leading-tight" style={{ color: "#fafafa", fontFamily: "Figtree, sans-serif" }}>Return Request</p>
-              <p className="text-xs" style={{ color: "#52525b", fontFamily: "Figtree, sans-serif" }}>{order.product_name}</p>
+              <p className="text-sm font-semibold leading-tight" style={{ color: AZ.ink, fontFamily: "Figtree, sans-serif" }}>Return Request</p>
+              <p className="text-xs" style={{ color: AZ.ink2, fontFamily: "Figtree, sans-serif" }}>{order.product_name}</p>
             </div>
           </div>
-          <button onClick={onClose} className="w-8 h-8 rounded-lg flex items-center justify-center text-lg transition-all hover:opacity-70" style={{ background: "#18181b", color: "#71717a" }}>
+          <button onClick={onClose} className="w-8 h-8 rounded-lg flex items-center justify-center text-lg transition-all hover:opacity-70" style={{ background: AZ.surfaceAlt, color: AZ.ink2 }}>
             ✕
           </button>
         </div>
@@ -531,12 +533,12 @@ export default function ReturnModal({ order, onClose }: { order: Order; onClose:
               <div key={s} className="flex items-center gap-2 flex-1">
                 <div className="flex items-center gap-1.5">
                   <div className="w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold transition-all"
-                    style={{ background: i < currentStepIdx ? "#10b981" : i === currentStepIdx ? "rgba(16,185,129,0.15)" : "#18181b", border: i === currentStepIdx ? "1px solid rgba(16,185,129,0.4)" : "1px solid #27272a", color: i <= currentStepIdx ? "#10b981" : "#52525b", fontFamily: "Figtree, sans-serif" }}>
+                    style={{ background: i < currentStepIdx ? AZ.green : i === currentStepIdx ? AZ.greenBg : AZ.surfaceAlt, border: i === currentStepIdx ? `1px solid ${AZ.green}` : `1px solid ${AZ.border}`, color: i < currentStepIdx ? "#fff" : i === currentStepIdx ? AZ.green : AZ.ink2, fontFamily: "Figtree, sans-serif" }}>
                     {i < currentStepIdx ? "✓" : i + 1}
                   </div>
-                  <span className="text-xs font-medium" style={{ color: i === currentStepIdx ? "#fafafa" : "#52525b", fontFamily: "Figtree, sans-serif" }}>{s}</span>
+                  <span className="text-xs font-medium" style={{ color: i === currentStepIdx ? AZ.ink : AZ.ink2, fontFamily: "Figtree, sans-serif" }}>{s}</span>
                 </div>
-                {i < STEPS.length - 1 && <div className="flex-1 h-px" style={{ background: i < currentStepIdx ? "#10b981" : "#27272a" }} />}
+                {i < STEPS.length - 1 && <div className="flex-1 h-px" style={{ background: i < currentStepIdx ? AZ.green : AZ.border }} />}
               </div>
             ))}
           </div>
@@ -544,19 +546,19 @@ export default function ReturnModal({ order, onClose }: { order: Order; onClose:
           {/* Step: Reason */}
           {step === "reason" && (
             <div className="space-y-2">
-              <p className="font-bold" style={{ fontFamily: "Syne, sans-serif", color: "#fafafa" }}>Why are you returning it?</p>
-              <p className="text-xs mb-3" style={{ color: "#52525b", fontFamily: "Figtree, sans-serif" }}>Return reason is the strongest disposition signal.</p>
+              <p className="font-bold" style={{ fontFamily: "Syne, sans-serif", color: AZ.ink }}>Why are you returning it?</p>
+              <p className="text-xs mb-3" style={{ color: AZ.ink2, fontFamily: "Figtree, sans-serif" }}>Return reason is the strongest disposition signal.</p>
               {RETURN_REASONS.map((r) => (
                 <button key={r.value}
                   onClick={() => { setReason(r.value); setStep("upload"); }}
                   className="w-full text-left p-3.5 rounded-xl flex items-center gap-3 transition-all"
-                  style={{ background: "#111113", border: "1px solid #27272a" }}
-                  onMouseEnter={e => (e.currentTarget.style.borderColor = "#3f3f46")}
-                  onMouseLeave={e => (e.currentTarget.style.borderColor = "#27272a")}
+                  style={{ background: AZ.surfaceAlt, border: `1px solid ${AZ.border}` }}
+                  onMouseEnter={e => (e.currentTarget.style.borderColor = AZ.borderDark)}
+                  onMouseLeave={e => (e.currentTarget.style.borderColor = AZ.border)}
                 >
                   <span className="text-lg w-7 text-center">{r.icon}</span>
-                  <span className="font-medium text-sm" style={{ color: "#fafafa", fontFamily: "Figtree, sans-serif" }}>{r.label}</span>
-                  <span className="ml-auto text-xs" style={{ color: "#52525b" }}>→</span>
+                  <span className="font-medium text-sm" style={{ color: AZ.ink, fontFamily: "Figtree, sans-serif" }}>{r.label}</span>
+                  <span className="ml-auto text-xs" style={{ color: AZ.ink2 }}>→</span>
                 </button>
               ))}
             </div>
@@ -565,15 +567,15 @@ export default function ReturnModal({ order, onClose }: { order: Order; onClose:
           {/* Step: Upload */}
           {step === "upload" && (
             <div className="space-y-4">
-              <p className="font-bold" style={{ fontFamily: "Syne, sans-serif", color: "#fafafa" }}>Upload photos</p>
+              <p className="font-bold" style={{ fontFamily: "Syne, sans-serif", color: AZ.ink }}>Upload photos</p>
 
-              <div className="rounded-xl p-3" style={{ background: "rgba(59,130,246,0.06)", border: "1px solid rgba(59,130,246,0.2)" }}>
+              <div className="rounded-xl p-3" style={{ background: "#EAF1F8", border: `1px solid ${AZ.border}` }}>
                 <div className="flex items-start gap-2">
                   <span>🔒</span>
                   <div>
-                    <p className="text-xs font-semibold" style={{ color: "#3b82f6", fontFamily: "Figtree, sans-serif" }}>Fraud Prevention Check</p>
-                    <p className="text-xs mt-0.5" style={{ color: "#52525b", fontFamily: "Figtree, sans-serif" }}>
-                      Include code <span className="font-mono font-bold px-1 rounded" style={{ color: "#fafafa", background: "#27272a" }}>{otpCode}</span> visibly in your photo.
+                    <p className="text-xs font-semibold" style={{ color: AZ.blue, fontFamily: "Figtree, sans-serif" }}>Fraud Prevention Check</p>
+                    <p className="text-xs mt-0.5" style={{ color: AZ.ink2, fontFamily: "Figtree, sans-serif" }}>
+                      Include code <span className="font-mono font-bold px-1 rounded" style={{ color: AZ.ink, background: AZ.surfaceAlt }}>{otpCode}</span> visibly in your photo.
                     </p>
                   </div>
                 </div>
@@ -583,20 +585,20 @@ export default function ReturnModal({ order, onClose }: { order: Order; onClose:
               {!isVideo && mediaFiles.length > 0 && (
                 <div className="grid grid-cols-3 gap-2">
                   {mediaFiles.map((f, i) => (
-                    <div key={i} className="relative aspect-square rounded-xl overflow-hidden" style={{ background: "#18181b" }}>
+                    <div key={i} className="relative aspect-square rounded-xl overflow-hidden" style={{ background: AZ.surfaceAlt }}>
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img src={URL.createObjectURL(f)} alt={`Photo ${i + 1}`} className="w-full h-full object-cover" />
                       <button
                         onClick={() => removeFile(i)}
                         className="absolute top-1 right-1 w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold"
-                        style={{ background: "rgba(0,0,0,0.7)", color: "#fff" }}
+                        style={{ background: "rgba(15,17,17,0.7)", color: "#fff" }}
                       >✕</button>
                     </div>
                   ))}
                   {mediaFiles.length < 3 && (
-                    <label className="aspect-square rounded-xl flex flex-col items-center justify-center cursor-pointer" style={{ border: "2px dashed #3f3f46", background: "#111113" }}>
-                      <span className="text-xl mb-1">+</span>
-                      <span className="text-xs" style={{ color: "#52525b", fontFamily: "Figtree, sans-serif" }}>{3 - mediaFiles.length} left</span>
+                    <label className="aspect-square rounded-xl flex flex-col items-center justify-center cursor-pointer" style={{ border: `2px dashed ${AZ.borderDark}`, background: AZ.surfaceAlt }}>
+                      <span className="text-xl mb-1" style={{ color: AZ.ink2 }}>+</span>
+                      <span className="text-xs" style={{ color: AZ.ink2, fontFamily: "Figtree, sans-serif" }}>{3 - mediaFiles.length} left</span>
                       <input type="file" accept="image/*" multiple className="hidden" onChange={(e) => { if (e.target.files) handleFilesSelect(e.target.files); }} />
                     </label>
                   )}
@@ -605,53 +607,53 @@ export default function ReturnModal({ order, onClose }: { order: Order; onClose:
 
               {/* Video display */}
               {isVideo && (
-                <div className="rounded-xl p-4 flex items-center gap-3" style={{ background: "#111113", border: "1px solid rgba(16,185,129,0.2)" }}>
+                <div className="rounded-xl p-4 flex items-center gap-3" style={{ background: AZ.surfaceAlt, border: `1px solid ${AZ.green}` }}>
                   <span className="text-2xl">🎥</span>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium truncate" style={{ color: "#10b981", fontFamily: "Figtree, sans-serif" }}>{mediaFiles[0].name}</p>
-                    <p className="text-xs mt-0.5" style={{ color: "#52525b", fontFamily: "Figtree, sans-serif" }}>3 frames will be extracted for analysis</p>
+                    <p className="text-sm font-medium truncate" style={{ color: AZ.green, fontFamily: "Figtree, sans-serif" }}>{mediaFiles[0].name}</p>
+                    <p className="text-xs mt-0.5" style={{ color: AZ.ink2, fontFamily: "Figtree, sans-serif" }}>3 frames will be extracted for analysis</p>
                   </div>
-                  <button onClick={() => setMediaFiles([])} className="text-xs px-2 py-1 rounded-lg" style={{ background: "#27272a", color: "#71717a" }}>✕</button>
+                  <button onClick={() => setMediaFiles([])} className="text-xs px-2 py-1 rounded-lg" style={{ background: AZ.card, color: AZ.ink2, border: `1px solid ${AZ.border}` }}>✕</button>
                 </div>
               )}
 
               {/* Upload zone (shown when no files yet) */}
               {!hasFiles && (
                 <label className="block cursor-pointer">
-                  <div className="rounded-xl p-8 text-center" style={{ border: "2px dashed #27272a", background: "#111113" }}>
+                  <div className="rounded-xl p-8 text-center" style={{ border: `2px dashed ${AZ.border}`, background: AZ.surfaceAlt }}>
                     <p className="text-3xl mb-2">📷</p>
-                    <p className="text-sm font-semibold" style={{ color: "#a1a1aa", fontFamily: "Figtree, sans-serif" }}>Click to upload photos or video</p>
-                    <p className="text-xs mt-1" style={{ color: "#52525b" }}>Up to 3 photos · or 1 video (max 15 s)</p>
+                    <p className="text-sm font-semibold" style={{ color: AZ.ink, fontFamily: "Figtree, sans-serif" }}>Click to upload photos or video</p>
+                    <p className="text-xs mt-1" style={{ color: AZ.ink2 }}>Up to 3 photos · or 1 video (max 15 s)</p>
                   </div>
                   <input type="file" accept="image/*,video/*" multiple className="hidden" onChange={(e) => { if (e.target.files) handleFilesSelect(e.target.files); }} />
                 </label>
               )}
 
               {fileError && (
-                <p className="text-xs font-semibold px-3 py-2 rounded-lg" style={{ background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.25)", color: "#ef4444", fontFamily: "Figtree, sans-serif" }}>
+                <p className="text-xs font-semibold px-3 py-2 rounded-lg" style={{ background: AZ.redBg, border: `1px solid ${AZ.red}`, color: AZ.red, fontFamily: "Figtree, sans-serif" }}>
                   ⚠ {fileError}
                 </p>
               )}
 
               <button onClick={handleSubmit} disabled={!hasFiles || loading}
-                className="w-full font-semibold py-3 rounded-xl transition-all"
-                style={{ background: !hasFiles ? "#18181b" : "#10b981", color: !hasFiles ? "#3f3f46" : "#0c0c0e", fontFamily: "Figtree, sans-serif", cursor: !hasFiles ? "not-allowed" : "pointer", border: !hasFiles ? "1px solid #27272a" : "none" }}>
+                className="w-full font-semibold py-3 rounded-full transition-all"
+                style={{ background: !hasFiles ? AZ.surfaceAlt : AZ.ctaYellow, color: !hasFiles ? AZ.ink2 : AZ.ink, fontFamily: "Figtree, sans-serif", cursor: !hasFiles ? "not-allowed" : "pointer", border: !hasFiles ? `1px solid ${AZ.border}` : `1px solid ${AZ.ctaYellowBorder}` }}>
                 {!hasFiles ? "Upload a photo or video to continue" : isVideo ? "Extract Frames & Grade →" : `Submit ${mediaFiles.length} photo${mediaFiles.length > 1 ? "s" : ""} & Grade with AI →`}
               </button>
-              <button onClick={() => setStep("reason")} className="w-full text-sm" style={{ color: "#52525b" }}>← Back</button>
+              <button onClick={() => setStep("reason")} className="w-full text-sm" style={{ color: AZ.link }}>← Back</button>
             </div>
           )}
 
           {/* Step: Extracting frames */}
           {step === "extracting" && (
             <div className="text-center py-10">
-              <div className="w-16 h-16 rounded-2xl mx-auto mb-4 flex items-center justify-center text-3xl" style={{ background: "rgba(59,130,246,0.1)", border: "1px solid rgba(59,130,246,0.2)" }}>🎞️</div>
-              <p className="font-bold mb-1" style={{ fontFamily: "Syne, sans-serif", color: "#fafafa" }}>Extracting Inspection Frames</p>
-              <p className="text-xs mb-2" style={{ color: "#52525b", fontFamily: "Figtree, sans-serif" }}>Sampling 3 frames at 25% · 50% · 75% of video</p>
-              <p className="text-xs mb-5" style={{ color: "#3b82f6", fontFamily: "Figtree, sans-serif" }}>Each frame analysed separately by Gemini 2.5 Flash</p>
+              <div className="w-16 h-16 rounded-2xl mx-auto mb-4 flex items-center justify-center text-3xl" style={{ background: "#EAF1F8", border: `1px solid ${AZ.border}` }}>🎞️</div>
+              <p className="font-bold mb-1" style={{ fontFamily: "Syne, sans-serif", color: AZ.ink }}>Extracting Inspection Frames</p>
+              <p className="text-xs mb-2" style={{ color: AZ.ink2, fontFamily: "Figtree, sans-serif" }}>Sampling 3 frames at 25% · 50% · 75% of video</p>
+              <p className="text-xs mb-5" style={{ color: AZ.blue, fontFamily: "Figtree, sans-serif" }}>Each frame analysed separately by Gemini 2.5 Flash</p>
               <div className="flex gap-1.5 justify-center">
                 {[0,1,2,3].map((i) => (
-                  <div key={i} className="w-1.5 h-1.5 rounded-full" style={{ background: "#3b82f6", animation: `bounce 1s ${i * 150}ms infinite` }} />
+                  <div key={i} className="w-1.5 h-1.5 rounded-full" style={{ background: AZ.blue, animation: `bounce 1s ${i * 150}ms infinite` }} />
                 ))}
               </div>
             </div>
@@ -660,14 +662,14 @@ export default function ReturnModal({ order, onClose }: { order: Order; onClose:
           {/* Step: Grading */}
           {step === "grading" && (
             <div className="text-center py-10">
-              <div className="w-16 h-16 rounded-2xl mx-auto mb-4 flex items-center justify-center text-3xl" style={{ background: "rgba(16,185,129,0.1)", border: "1px solid rgba(16,185,129,0.2)" }}>🔍</div>
-              <p className="font-bold mb-1" style={{ fontFamily: "Syne, sans-serif", color: "#fafafa" }}>AI Grading in Progress</p>
-              <p className="text-xs mb-5" style={{ color: "#52525b", fontFamily: "Figtree, sans-serif" }}>
+              <div className="w-16 h-16 rounded-2xl mx-auto mb-4 flex items-center justify-center text-3xl" style={{ background: AZ.greenBg, border: `1px solid ${AZ.border}` }}>🔍</div>
+              <p className="font-bold mb-1" style={{ fontFamily: "Syne, sans-serif", color: AZ.ink }}>AI Grading in Progress</p>
+              <p className="text-xs mb-5" style={{ color: AZ.ink2, fontFamily: "Figtree, sans-serif" }}>
                 Gemini 2.5 Flash analysing · Computing worst-case grade across frames
               </p>
               <div className="flex gap-1.5 justify-center">
                 {[0,1,2,3].map((i) => (
-                  <div key={i} className="w-1.5 h-1.5 rounded-full" style={{ background: "#10b981", animation: `bounce 1s ${i * 150}ms infinite` }} />
+                  <div key={i} className="w-1.5 h-1.5 rounded-full" style={{ background: AZ.green, animation: `bounce 1s ${i * 150}ms infinite` }} />
                 ))}
               </div>
             </div>
@@ -677,8 +679,8 @@ export default function ReturnModal({ order, onClose }: { order: Order; onClose:
           {step === "result" && grade && disposition && (
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <p className="font-bold" style={{ fontFamily: "Syne, sans-serif", color: "#fafafa" }}>Return Decision</p>
-                <span className="text-xs px-2 py-0.5 rounded" style={{ background: "rgba(16,185,129,0.1)", color: "#10b981", border: "1px solid rgba(16,185,129,0.2)", fontFamily: "Figtree, sans-serif" }}>AI Complete ✓</span>
+                <p className="font-bold" style={{ fontFamily: "Syne, sans-serif", color: AZ.ink }}>Return Decision</p>
+                <span className="text-xs px-2 py-0.5 rounded" style={{ background: AZ.greenBg, color: AZ.green, border: `1px solid ${AZ.border}`, fontFamily: "Figtree, sans-serif" }}>AI Complete ✓</span>
               </div>
 
               {/* Keep-It negotiation takes priority when the item is worth keeping */}
