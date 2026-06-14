@@ -20,12 +20,12 @@ const STATUS_STYLE: Record<string, { color: string; bg: string; border: string }
 };
 
 const DEFAULT_PROFILE = {
-  name: "Ramesh Kumar",
-  email: "ramesh.kumar@gmail.com",
-  phone: "+91 98765 43210",
-  location: "Mumbai, Maharashtra",
-  eco_preference: "High",
-  member_since: "2023",
+  name: "User",
+  email: "",
+  phone: "",
+  location: "",
+  eco_preference: "Medium",
+  member_since: "2026",
 };
 
 type Profile = typeof DEFAULT_PROFILE;
