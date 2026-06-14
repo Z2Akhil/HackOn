@@ -32,6 +32,18 @@ export interface ScoreBreakdown {
   final: number;       // weighted composite 0–1
 }
 
+// "Keep-It" negotiation: instead of shipping a functionally-sound item back,
+// offer the customer a partial refund to keep it. Prevents the return entirely.
+export interface KeepItOffer {
+  eligible: boolean;
+  refund_amount: number;     // ₹ instantly refunded to the customer
+  green_credits: number;     // bonus credits for the sustainable choice
+  seller_saves: number;      // ₹ the seller nets vs. processing the return
+  co2_saved_kg: number;      // CO₂ avoided (no reverse logistics at all)
+  severity: number;          // 0–1 cosmetic/functional severity of the item
+  reasoning: string;         // customer-facing explanation
+}
+
 export interface DispositionResult {
   decision: "resell" | "refurbish" | "donate" | "recycle" | "exchange";
   ev_table: EVTable;
@@ -42,6 +54,7 @@ export interface DispositionResult {
   reasoning_text: string;
   green_credits: number;
   listing_flagged?: boolean;
+  keep_it?: KeepItOffer;      // surfaced when the item is worth keeping
 }
 
 export interface PreventionScore {
@@ -77,4 +90,12 @@ export interface MarketplaceListing {
   expected_lifespan_years: number;
   warranty_months: number;
   inspection_images?: string[];
+
+  // Demand-based dynamic pricing (populated by the pricing engine)
+  base_price?: number;        // original resale price (pre-adjustment)
+  dynamic_price?: number;     // live, demand-adjusted price
+  demand_count?: number;      // # of buyers actively matching this item
+  demand_level?: "high" | "medium" | "low";
+  price_trend?: "up" | "down" | "stable";
+  pricing_reason?: string;    // human-readable explanation of the adjustment
 }

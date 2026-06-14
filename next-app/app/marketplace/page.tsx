@@ -186,7 +186,7 @@ export default function MarketplacePage() {
                       <span className="text-xs font-black px-1.5 py-0.5 rounded" style={{ background: tone.bg, color: tone.color, fontFamily: "Syne, sans-serif" }}>
                         {listing.match_percent}% match
                       </span>
-                      <span className="text-xs font-bold" style={{ color: "#fafafa", fontFamily: "Syne, sans-serif" }}>₹{listing.asking_price.toLocaleString("en-IN")}</span>
+                      <span className="text-xs font-bold" style={{ color: "#fafafa", fontFamily: "Syne, sans-serif" }}>₹{(listing.dynamic_price ?? listing.asking_price).toLocaleString("en-IN")}</span>
                     </div>
                   </div>
                 </button>
@@ -238,9 +238,13 @@ export default function MarketplacePage() {
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
           {filtered.map((listing, i) => {
             const badge = GRADE_BADGE[listing.grade.grade] ?? GRADE_BADGE["B+"];
-            const discount = Math.round((1 - listing.asking_price / listing.mrp) * 100);
+            const livePrice = listing.dynamic_price ?? listing.asking_price;
+            const discount = Math.round((1 - livePrice / listing.mrp) * 100);
             const pers = isPersonalized(listing) ? listing : null;
             const tone = pers ? matchTone(pers.match_percent) : null;
+            const trend = listing.price_trend;
+            const trendColor = trend === "up" ? "#f59e0b" : trend === "down" ? "#10b981" : "#52525b";
+            const trendIcon = trend === "up" ? "▲" : trend === "down" ? "▼" : "•";
             return (
               <button
                 key={listing.id}
@@ -293,13 +297,27 @@ export default function MarketplacePage() {
 
                   {/* Pricing */}
                   <div>
-                    <div className="font-bold text-base" style={{ color: "#fafafa", fontFamily: "Syne, sans-serif" }}>
-                      ₹{listing.asking_price.toLocaleString("en-IN")}
+                    <div className="flex items-baseline gap-1.5">
+                      <span className="font-bold text-base" style={{ color: "#fafafa", fontFamily: "Syne, sans-serif" }}>
+                        ₹{livePrice.toLocaleString("en-IN")}
+                      </span>
+                      {trend && trend !== "stable" && (
+                        <span className="text-xs font-bold" style={{ color: trendColor, fontFamily: "Syne, sans-serif" }}>
+                          {trendIcon}
+                        </span>
+                      )}
                     </div>
                     <div className="text-xs line-through" style={{ color: "#3f3f46" }}>
                       ₹{listing.mrp.toLocaleString("en-IN")}
                     </div>
                   </div>
+
+                  {/* Demand / dynamic-pricing signal */}
+                  {listing.pricing_reason && (
+                    <p className="text-xs line-clamp-1" style={{ color: trendColor, fontFamily: "Figtree, sans-serif" }}>
+                      {listing.pricing_reason}
+                    </p>
+                  )}
 
                   {/* Circularity */}
                   {listing.circularity_score != null && (

@@ -1,4 +1,4 @@
-import { GradeResult, EVTable, DispositionResult, ScoreBreakdown } from "@/types";
+import { GradeResult, EVTable, DispositionResult, ScoreBreakdown, KeepItOffer } from "@/types";
 import { getResaleReference } from "./data";
 import { computeCircularityScore } from "./circularity";
 
@@ -132,6 +132,8 @@ export function computeEV(
   const circularity_score = computeCircularityScore(grade, category);
   const co2_saved_kg = CO2_SAVED_KG[decision] ?? 5;
 
+  const keep_it = computeKeepItOffer(grade, mrp, return_reason, ev_resell);
+
   return {
     decision,
     ev_table,
@@ -142,6 +144,7 @@ export function computeEV(
     reasoning_text: "",
     green_credits: computeGreenCredits(decision, mrp, circularity_score),
     listing_flagged: return_reason === "not_as_described",
+    keep_it,
   };
 }
 
@@ -149,4 +152,91 @@ function downgradeGrade(g: string): string {
   const order = ["A", "A-", "B+", "B", "C"];
   const idx = order.indexOf(g);
   return order[Math.min(idx + 1, order.length - 1)];
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// "Keep-It" Negotiation Engine
+// The cheapest return is the one that never ships. If a returned item is
+// functionally sound (only cosmetic / changed-mind), we offer the customer a
+// partial refund to KEEP it — preventing 100% of reverse logistics + restocking.
+// ─────────────────────────────────────────────────────────────────────────────
+
+// How worn the item is, 0 (pristine) → 1 (poor). Lower = better keep-it candidate.
+const GRADE_SEVERITY: Record<string, number> = { A: 0.05, "A-": 0.12, "B+": 0.28, B: 0.5, C: 0.75 };
+const RISK_SEVERITY:  Record<string, number> = { none: 0.0, low: 0.12, medium: 0.4, high: 0.75 };
+
+// Return reasons where keeping the item makes sense (item itself is fine).
+const KEEP_IT_REASONS = new Set(["changed_mind", "not_as_described"]);
+
+function computeSeverity(grade: GradeResult): number {
+  const g = GRADE_SEVERITY[grade.grade] ?? 0.5;
+  const r = RISK_SEVERITY[grade.functional_risk] ?? 0.4;
+  const d = Math.min(grade.defects.length * 0.05, 0.2);
+  return Math.min(1, Math.max(0, 0.55 * g + 0.35 * r + 0.1 * d));
+}
+
+export function computeKeepItOffer(
+  grade: GradeResult,
+  mrp: number,
+  return_reason: string,
+  ev_resell: number
+): KeepItOffer {
+  const severity = parseFloat(computeSeverity(grade).toFixed(3));
+
+  // Eligibility: item must be functionally sound, decently graded, and the
+  // return reason must not require a physical return/exchange.
+  const goodGrade = ["A", "A-", "B+"].includes(grade.grade);
+  const soundFunction = grade.functional_risk === "none" || grade.functional_risk === "low";
+  const reasonOk = KEEP_IT_REASONS.has(return_reason);
+
+  // What the seller loses by accepting the return and reselling: they refund
+  // the full MRP and only recover ev_resell. Keeping it avoids that whole gap.
+  const avoided_loss = Math.max(0, mrp - Math.max(0, ev_resell));
+
+  const eligible = goodGrade && soundFunction && reasonOk && avoided_loss > 200;
+
+  if (!eligible) {
+    return {
+      eligible: false,
+      refund_amount: 0,
+      green_credits: 0,
+      seller_saves: 0,
+      co2_saved_kg: 0,
+      severity,
+      reasoning: "",
+    };
+  }
+
+  // Refund share scales with severity: a slightly more worn (but still sound)
+  // item needs a bigger incentive for the customer to keep it.
+  const refund_share = Math.min(0.7, Math.max(0.35, 0.35 + severity * 0.6));
+
+  // Refund the customer a share of the avoided loss, bounded to a believable
+  // 5%–40% of MRP so the seller always keeps a margin.
+  let refund_amount = Math.round(avoided_loss * refund_share);
+  refund_amount = Math.max(refund_amount, Math.round(mrp * 0.05));
+  refund_amount = Math.min(refund_amount, Math.round(mrp * 0.4), Math.round(avoided_loss * 0.85));
+
+  const seller_saves = Math.max(0, Math.round(avoided_loss - refund_amount));
+
+  // Keeping the item avoids ALL reverse logistics — the greenest outcome.
+  const co2_saved_kg = 16.5;
+
+  // Generous green credits for choosing the most sustainable path.
+  const green_credits = Math.round(60 + (refund_amount / mrp) * 120);
+
+  const reasoning =
+    `This item grades ${grade.grade} with ${grade.functional_risk} functional risk — it's fully usable. ` +
+    `Keep it and we'll instantly refund ₹${refund_amount.toLocaleString("en-IN")} to your account, with no need to ship anything back. ` +
+    `You skip the hassle, we save ₹${seller_saves.toLocaleString("en-IN")} in reverse logistics, and the planet avoids ${co2_saved_kg} kg of CO₂.`;
+
+  return {
+    eligible: true,
+    refund_amount,
+    green_credits,
+    seller_saves,
+    co2_saved_kg,
+    severity,
+    reasoning,
+  };
 }

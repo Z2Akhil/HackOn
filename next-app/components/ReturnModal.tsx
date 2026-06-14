@@ -88,6 +88,112 @@ const DECISION_CONFIG = {
   },
 } as const;
 
+// ── Keep-It Negotiation Panel ───────────────────────────────────────────────
+function KeepItPanel({
+  offer, productName, onAccept, onDecline,
+}: {
+  offer: NonNullable<DispositionResult["keep_it"]>;
+  productName: string;
+  onAccept: () => void;
+  onDecline: () => void;
+}) {
+  return (
+    <div className="rounded-2xl overflow-hidden animate-fade-up" style={{ border: "1px solid rgba(16,185,129,0.35)" }}>
+      {/* Header band */}
+      <div className="px-5 py-4 flex items-center gap-3" style={{ background: "rgba(16,185,129,0.1)" }}>
+        <span className="text-2xl">💚</span>
+        <div className="flex-1">
+          <p className="font-bold" style={{ color: "#fafafa", fontFamily: "Syne, sans-serif" }}>Keep It & Get Cash Back</p>
+          <span className="text-xs font-semibold" style={{ color: "#10b981", fontFamily: "Figtree, sans-serif" }}>
+            Smartest option · no shipping needed
+          </span>
+        </div>
+        <span className="text-xs px-2 py-0.5 rounded font-semibold" style={{ background: "rgba(16,185,129,0.15)", color: "#10b981", border: "1px solid rgba(16,185,129,0.3)", fontFamily: "Figtree, sans-serif" }}>
+          AI Offer
+        </span>
+      </div>
+
+      {/* Body */}
+      <div className="px-5 py-4 space-y-4" style={{ background: "#0c0c0e" }}>
+        {/* Big refund number */}
+        <div className="rounded-xl p-4 text-center" style={{ background: "rgba(16,185,129,0.06)", border: "1px solid rgba(16,185,129,0.15)" }}>
+          <p className="text-xs font-semibold uppercase tracking-widest" style={{ color: "#10b981", fontFamily: "Figtree, sans-serif" }}>Instant partial refund</p>
+          <p className="text-4xl font-black mt-1" style={{ color: "#10b981", fontFamily: "Syne, sans-serif" }}>
+            ₹{offer.refund_amount.toLocaleString("en-IN")}
+          </p>
+          <p className="text-xs mt-1" style={{ color: "#52525b", fontFamily: "Figtree, sans-serif" }}>credited the moment you accept</p>
+        </div>
+
+        <p className="text-xs leading-relaxed" style={{ color: "#a1a1aa", fontFamily: "Figtree, sans-serif" }}>
+          {offer.reasoning}
+        </p>
+
+        {/* Meta pills */}
+        <div className="flex flex-wrap gap-2">
+          <span className="text-xs font-semibold px-2.5 py-1 rounded-lg" style={{ background: "rgba(16,185,129,0.08)", border: "1px solid rgba(16,185,129,0.2)", color: "#10b981", fontFamily: "Figtree, sans-serif" }}>
+            +{offer.green_credits} green credits
+          </span>
+          <span className="text-xs font-semibold px-2.5 py-1 rounded-lg" style={{ background: "rgba(16,185,129,0.08)", border: "1px solid rgba(16,185,129,0.2)", color: "#10b981", fontFamily: "Figtree, sans-serif" }}>
+            {offer.co2_saved_kg} kg CO₂ saved
+          </span>
+          <span className="text-xs font-semibold px-2.5 py-1 rounded-lg" style={{ background: "#18181b", border: "1px solid #27272a", color: "#71717a", fontFamily: "Figtree, sans-serif" }}>
+            no pickup · no wait
+          </span>
+        </div>
+
+        {/* Actions */}
+        <div className="flex gap-3 pt-1">
+          <button
+            onClick={onAccept}
+            className="flex-1 font-semibold py-3 rounded-xl transition-all hover:opacity-90 active:scale-[0.98]"
+            style={{ background: "#10b981", color: "#0c0c0e", fontFamily: "Figtree, sans-serif" }}
+          >
+            Accept ₹{offer.refund_amount.toLocaleString("en-IN")} & Keep It
+          </button>
+          <button
+            onClick={onDecline}
+            className="px-4 py-3 rounded-xl text-sm font-semibold transition-all hover:opacity-80"
+            style={{ background: "#18181b", color: "#a1a1aa", border: "1px solid #3f3f46", fontFamily: "Figtree, sans-serif" }}
+          >
+            No, return it
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function KeepItAcceptedPanel({ offer, onClose }: { offer: NonNullable<DispositionResult["keep_it"]>; onClose: () => void }) {
+  return (
+    <div className="rounded-2xl overflow-hidden animate-fade-up" style={{ border: "1px solid rgba(16,185,129,0.35)" }}>
+      <div className="px-5 py-4 flex items-center gap-3" style={{ background: "rgba(16,185,129,0.1)" }}>
+        <span className="text-2xl">🎉</span>
+        <div className="flex-1">
+          <p className="font-bold" style={{ color: "#fafafa", fontFamily: "Syne, sans-serif" }}>Return Prevented!</p>
+          <span className="text-xs font-semibold" style={{ color: "#10b981", fontFamily: "Figtree, sans-serif" }}>
+            ₹{offer.refund_amount.toLocaleString("en-IN")} refunded · item is yours to keep
+          </span>
+        </div>
+        <div className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold" style={{ background: "#10b981", color: "#0c0c0e" }}>✓</div>
+      </div>
+      <div className="px-5 py-4 space-y-4" style={{ background: "#0c0c0e" }}>
+        <p className="text-xs leading-relaxed" style={{ color: "#a1a1aa", fontFamily: "Figtree, sans-serif" }}>
+          ₹{offer.refund_amount.toLocaleString("en-IN")} has been credited to your account and {offer.green_credits} green credits added.
+          Nothing needs to be shipped — you keep the item. This avoided {offer.co2_saved_kg} kg of CO₂ from reverse logistics
+          and saved ReLoop ₹{offer.seller_saves.toLocaleString("en-IN")} in handling costs.
+        </p>
+        <button
+          onClick={onClose}
+          className="w-full font-semibold py-3 rounded-xl transition-all hover:opacity-90 active:scale-[0.98]"
+          style={{ background: "#10b981", color: "#0c0c0e", fontFamily: "Figtree, sans-serif" }}
+        >
+          Done
+        </button>
+      </div>
+    </div>
+  );
+}
+
 function NextStepPanel({
   disposition, otpCode, onClose, onList,
 }: {
@@ -301,6 +407,7 @@ export default function ReturnModal({ order, onClose }: { order: Order; onClose:
   const [loading, setLoading] = useState(false);
   const [fileError, setFileError] = useState("");
   const [otpCode] = useState(() => Math.floor(100000 + Math.random() * 900000).toString());
+  const [keepItChoice, setKeepItChoice] = useState<"pending" | "accepted" | "declined">("pending");
   const [pendingListing, setPendingListing] = useState<{
     grade: GradeResult;
     disposition: DispositionResult;
@@ -573,24 +680,45 @@ export default function ReturnModal({ order, onClose }: { order: Order; onClose:
                 <p className="font-bold" style={{ fontFamily: "Syne, sans-serif", color: "#fafafa" }}>Return Decision</p>
                 <span className="text-xs px-2 py-0.5 rounded" style={{ background: "rgba(16,185,129,0.1)", color: "#10b981", border: "1px solid rgba(16,185,129,0.2)", fontFamily: "Figtree, sans-serif" }}>AI Complete ✓</span>
               </div>
-              <GradeCard grade={grade} />
-              <DispositionCard disposition={disposition} productName={order.product_name} mrp={order.mrp} />
-              <NextStepPanel
-                disposition={disposition}
-                otpCode={otpCode}
-                onClose={onClose}
-                onList={pendingListing ? async () => {
-                  const listingId = await saveListingToStorage(
-                    order,
-                    pendingListing.grade,
-                    pendingListing.disposition,
-                    pendingListing.frameFiles
-                  );
-                  if (pendingListing.videoFile) {
-                    try { await storeVideo(listingId, pendingListing.videoFile); } catch {}
-                  }
-                } : undefined}
-              />
+
+              {/* Keep-It negotiation takes priority when the item is worth keeping */}
+              {disposition.keep_it?.eligible && keepItChoice === "pending" ? (
+                <>
+                  <GradeCard grade={grade} />
+                  <KeepItPanel
+                    offer={disposition.keep_it}
+                    productName={order.product_name}
+                    onAccept={() => setKeepItChoice("accepted")}
+                    onDecline={() => setKeepItChoice("declined")}
+                  />
+                </>
+              ) : disposition.keep_it?.eligible && keepItChoice === "accepted" ? (
+                <>
+                  <GradeCard grade={grade} />
+                  <KeepItAcceptedPanel offer={disposition.keep_it} onClose={onClose} />
+                </>
+              ) : (
+                <>
+                  <GradeCard grade={grade} />
+                  <DispositionCard disposition={disposition} productName={order.product_name} mrp={order.mrp} />
+                  <NextStepPanel
+                    disposition={disposition}
+                    otpCode={otpCode}
+                    onClose={onClose}
+                    onList={pendingListing ? async () => {
+                      const listingId = await saveListingToStorage(
+                        order,
+                        pendingListing.grade,
+                        pendingListing.disposition,
+                        pendingListing.frameFiles
+                      );
+                      if (pendingListing.videoFile) {
+                        try { await storeVideo(listingId, pendingListing.videoFile); } catch {}
+                      }
+                    } : undefined}
+                  />
+                </>
+              )}
             </div>
           )}
         </div>
