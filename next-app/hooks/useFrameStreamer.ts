@@ -31,9 +31,26 @@ interface UseFrameStreamerOptions {
   onDisconnect?: () => void;
 }
 
-const WS_URL = "ws://localhost:8000/vision-stream";
 const FRAME_INTERVAL_MS = 100; // 10 fps
 const JPEG_QUALITY = 0.7;
+
+/**
+ * Resolve the vision-stream WebSocket URL at connect time (client only).
+ * Priority:
+ *   1. NEXT_PUBLIC_VISION_WS_URL (explicit override, e.g. wss://host/vision-stream)
+ *   2. Same-origin path /vision-stream — nginx proxies this to FastAPI :8000.
+ *      Uses wss on https pages, ws on http, so it works in dev and prod.
+ * Falls back to localhost:8000 for direct (no-proxy) local dev.
+ */
+function resolveWsUrl(): string {
+  const override = process.env.NEXT_PUBLIC_VISION_WS_URL;
+  if (override) return override;
+  if (typeof window !== "undefined" && window.location) {
+    const proto = window.location.protocol === "https:" ? "wss" : "ws";
+    return `${proto}://${window.location.host}/vision-stream`;
+  }
+  return "ws://localhost:8000/vision-stream";
+}
 
 /**
  * Custom hook that captures frames from a video element at ~10fps,
@@ -114,8 +131,8 @@ export function useFrameStreamer({
       return;
     }
 
-    // Open WebSocket connection
-    const ws = new WebSocket(WS_URL);
+    // Open WebSocket connection (URL resolved at connect time — client only)
+    const ws = new WebSocket(resolveWsUrl());
     wsRef.current = ws;
 
     ws.onopen = () => {

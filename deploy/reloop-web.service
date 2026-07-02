@@ -1,0 +1,18 @@
+[Unit]
+Description=ReLoop Web (Next.js)
+After=network.target reloop-ml.service
+
+[Service]
+Type=simple
+User=ubuntu
+WorkingDirectory=/opt/reloop/next-app
+Environment=NODE_ENV=production
+Environment=PORT=3000
+# Next.js also auto-loads next-app/.env.local for server-side keys
+# (GEMINI_API_KEY, GROQ_API_KEY, ML_SERVICE_URL, GEMINI_MODEL, ...).
+ExecStart=/usr/bin/npm run start
+Restart=always
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target
