@@ -151,13 +151,20 @@ def make_row(i):
     price_band = "budget" if product["mrp"] < 2000 else ("mid" if product["mrp"] < 15000 else "premium")
     top_reason_enc = {"defective": 0, "wrong_size": 1, "not_as_described": 2, "changed_mind": 3, "wrong_variant": 4}
 
-    # Realistic correlations → will_return label
+    # Realistic correlations → will_return label.
+    # Signal is intentionally strong and well-separated so the isotonically
+    # calibrated model can output high probabilities (0.6+) for the classic
+    # high-risk archetype — apparel + size mismatch + heavy returner. With a
+    # weaker signal the calibrated max was ~0.5, so the intervention thresholds
+    # (banner > 0.6, nudge > 0.4) were never reached and no banner ever showed.
     risk = (
-        product["avg_return_rate"] * 0.3
-        + customer_cat_return_rate * 0.3
-        + (0.3 if size_mismatch and cat == "apparel" else 0)
-        + max(0, -review_fit_sentiment) * 0.1
+        product["avg_return_rate"] * 0.6
+        + customer_cat_return_rate * 0.5
+        + (0.55 if size_mismatch and cat == "apparel" else 0.0)
+        + max(0, -review_fit_sentiment) * 0.25
+        - 0.05  # slight negative baseline keeps clean cases genuinely low-risk
     )
+    risk = max(0.0, min(0.98, risk))
     will_return = int(random.random() < risk)
 
     return {

@@ -106,5 +106,61 @@ Every disposition decision tracks: CO₂ saved vs. manufacturing new, circularit
 
 ---
 
+## Live Deployment (AWS EC2)
+
+Both the Next.js app and the FastAPI ML service run on a single EC2 VM (t3.medium,
+Ubuntu) behind nginx with HTTPS. Full first-time setup: [deploy/DEPLOY.md](deploy/DEPLOY.md).
+
+- **URL:** https://52-71-221-255.sslip.io
+- **Host:** `ubuntu@52.71.221.255` · repo lives at `/opt/reloop`
+- **Services:** `reloop-web` (Next.js :3000) · `reloop-ml` (FastAPI :8000), both `systemd`
+- Secrets in `next-app/.env.local` + `ml-service/.env` (not in git — survive `git pull`)
+
+### SSH in
+```bash
+ssh -i ~/Downloads/reloop.pem ubuntu@52.71.221.255
+```
+> SSH hangs = mobile IP drifted. Update the `reloop-sg` SSH inbound rule to your new
+> `curl -4 ifconfig.me` (or set Anywhere-IPv4). Key-only login, no password.
+
+### Redeploy after code changes
+Push to GitHub `main` first (the VM clones `main`), then on the VM:
+
+```bash
+# Frontend change (most common) — pull + build + restart
+cd /opt/reloop && git pull
+cd next-app && npm ci && npm run build && sudo systemctl restart reloop-web
+
+# ML change (ml-service/ or models/)
+cd /opt/reloop && git pull
+ml-service/.venv/bin/pip install -r ml-service/requirements.txt   # only if requirements.txt changed
+ml-service/.venv/bin/python models/train_prevention.py           # only if training script/data changed
+sudo systemctl restart reloop-ml
+
+# Both at once
+cd /opt/reloop && git pull \
+  && (cd next-app && npm ci && npm run build) \
+  && sudo systemctl restart reloop-ml reloop-web
+```
+`npm ci` only when `package.json` changed; otherwise `npm run build` alone is faster.
+
+### Health / logs
+```bash
+systemctl is-active reloop-ml reloop-web
+curl -s localhost:8000/health                 # {"status":"ok","model_loaded":true}
+curl -sI https://52-71-221-255.sslip.io | head -1
+journalctl -u reloop-web -f                    # live app logs
+journalctl -u reloop-ml  -f                    # live ML logs
+```
+
+### Cost control (stop between demos, terminate after)
+```bash
+# AWS console: EC2 → Instances → reloop → Instance state ▸ Stop / Start
+# Elastic IP keeps the same public IP + HTTPS cert valid across stop/start.
+# After the event: Terminate instance + Release Elastic IP to stop all charges.
+```
+
+---
+
 ## Team
 HackOn with Amazon 6.0 · Second Life Commerce theme
