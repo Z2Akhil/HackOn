@@ -698,18 +698,6 @@ export default function ReturnModal({ order, onClose }: { order: Order; onClose:
             <div className="space-y-4">
               <p className="font-bold" style={{ fontFamily: "Syne, sans-serif", color: AZ.ink }}>Upload photos</p>
 
-              <div className="rounded-xl p-3" style={{ background: "#EAF1F8", border: `1px solid ${AZ.border}` }}>
-                <div className="flex items-start gap-2">
-                  <span>🔒</span>
-                  <div>
-                    <p className="text-xs font-semibold" style={{ color: AZ.blue, fontFamily: "Figtree, sans-serif" }}>Fraud Prevention Check</p>
-                    <p className="text-xs mt-0.5" style={{ color: AZ.ink2, fontFamily: "Figtree, sans-serif" }}>
-                      Include code <span className="font-mono font-bold px-1 rounded" style={{ color: AZ.ink, background: AZ.surfaceAlt }}>{otpCode}</span> visibly in your photo.
-                    </p>
-                  </div>
-                </div>
-              </div>
-
               {/* Image thumbnails */}
               {!isVideo && mediaFiles.length > 0 && (
                 <div className="grid grid-cols-3 gap-2">
