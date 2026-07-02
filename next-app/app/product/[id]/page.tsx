@@ -63,7 +63,7 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
               </div>
             </div>
 
-            <PreventionBanner productId={product.id} category={product.category} topReturnReason={product.top_return_reason} />
+            <PreventionBanner productId={product.id} category={product.category} topReturnReason={product.top_return_reason} avgReturnRate={product.avg_return_rate} />
 
             {/* Trust row */}
             <div className="grid grid-cols-3 gap-2 mt-1">
