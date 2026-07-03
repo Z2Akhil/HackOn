@@ -9,6 +9,7 @@ const CDN = "https://cdn.dummyjson.com/product-images";
 
 const ORDERS = [
   { id: "o006", product_name: "boAt Airdopes 141 TWS Earbuds",     category: "electronics",     mrp: 1299,  ordered: "12 Jun 2026", status: "Delivered",        returnable: true,  image: `${CDN}/mobile-accessories/apple-airpods/thumbnail.webp` },
+  { id: "o007", product_name: "OnePlus Nord CE 4 (8GB/128GB)",     category: "electronics",     mrp: 24999, ordered: "14 Jun 2026", status: "Delivered",        returnable: true,  image: `${CDN}/smartphones/oppo-a57/thumbnail.webp` },
   { id: "o002", product_name: "Sony WH-1000XM5 Headphones",       category: "electronics",     mrp: 29990, ordered: "22 May 2026", status: "Delivered",        returnable: true,  image: `${CDN}/mobile-accessories/apple-airpods-max-silver/thumbnail.webp` },
   { id: "o003", product_name: "Levis 511 Slim Fit Jeans",          category: "apparel",         mrp: 4999,  ordered: "1 Jun 2026",  status: "Delivered",        returnable: true,  image: `${CDN}/mens-shirts/blue-&-black-check-shirt/thumbnail.webp` },
   { id: "o001", product_name: "Bajaj Mixer Grinder 750W",         category: "home_appliances",  mrp: 3499,  ordered: "18 May 2026", status: "Delivered",        returnable: true,  image: `${CDN}/kitchen-accessories/boxed-blender/thumbnail.webp` },

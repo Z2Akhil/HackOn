@@ -13,6 +13,7 @@ import { Check } from "lucide-react";
 const CDN = "https://cdn.dummyjson.com/product-images";
 export const DEMO_ORDERS = [
   { id: "o006", product_id: "p012", product_name: "boAt Airdopes 141 TWS Earbuds",     category: "electronics",     mrp: 1299,  ordered: "2026-06-12", image: `${CDN}/mobile-accessories/apple-airpods/thumbnail.webp` },
+  { id: "o007", product_id: "p005", product_name: "OnePlus Nord CE 4 (8GB/128GB)",     category: "electronics",     mrp: 24999, ordered: "2026-06-14", image: `${CDN}/smartphones/oppo-a57/thumbnail.webp` },
   { id: "o002", product_id: "p001", product_name: "Sony WH-1000XM5 Headphones",       category: "electronics",     mrp: 29990, ordered: "2026-05-22", image: `${CDN}/mobile-accessories/apple-airpods-max-silver/thumbnail.webp` },
   { id: "o003", product_id: "p004", product_name: "Levis 511 Slim Fit Jeans",          category: "apparel",         mrp: 4999,  ordered: "2026-06-01", image: `${CDN}/mens-shirts/blue-&-black-check-shirt/thumbnail.webp` },
   { id: "o001", product_id: "p003", product_name: "Bajaj Mixer Grinder 750W",         category: "home_appliances",  mrp: 3499,  ordered: "2026-05-18", image: `${CDN}/kitchen-accessories/boxed-blender/thumbnail.webp` },
@@ -22,10 +23,17 @@ export const DEMO_ORDERS = [
 const RETURN_REASONS = [
   { value: "defective",        label: "Defective / Not working",  icon: "⚡" },
   { value: "wrong_size",       label: "Wrong size / Doesn't fit", icon: "📏" },
-  { value: "not_as_described", label: "Not as described",         icon: "📋" },
   { value: "changed_mind",     label: "Changed my mind",          icon: "💭" },
   { value: "wrong_variant",    label: "Wrong variant / colour",   icon: "🎨" },
+  { value: "not_as_described", label: "Others",                   icon: "✏️" },
 ];
+
+// Only "Others" takes a free-text detail — it's the catch-all, and the note
+// feeds the AI grading as a verified-against-photos hint.
+const NOTE_REASONS = new Set(["not_as_described"]);
+const NOTE_PLACEHOLDER: Record<string, string> = {
+  not_as_described: "Tell us why you're returning it — e.g. colour is grey not blue, wrong item received, missing parts",
+};
 
 const MOCK_GRADE: GradeResult = {
   grade: "A-", functional_risk: "low",
@@ -261,6 +269,7 @@ function NextStepPanel({
 }) {
   const router = useRouter();
   const [listState, setListState] = useState<"idle" | "saving" | "done">("idle");
+  const [fcState, setFcState] = useState<"idle" | "done">("idle");
   const key = (disposition.decision ?? "resell") as keyof typeof DECISION_CONFIG;
   const cfg = DECISION_CONFIG[key] ?? DECISION_CONFIG.resell;
   const isListable = ["resell", "refurbish"].includes(disposition.decision);
@@ -270,6 +279,51 @@ function NextStepPanel({
     setListState("saving");
     await onList();
     setListState("done");
+  }
+
+  // "Return to fulfillment centre" confirmation — a page-like takeover with a
+  // status timeline and a redirect back to home.
+  if (fcState === "done") {
+    const steps = [
+      { done: true, label: "Return request initiated" },
+      { done: true, label: "Pickup partner informed" },
+      { done: false, label: "On the way to the nearest fulfillment centre" },
+    ];
+    return (
+      <div className="rounded-2xl overflow-hidden" style={{ border: `1px solid ${AZ.border}` }}>
+        {/* Header band */}
+        <div className="px-5 py-4 flex items-center gap-3" style={{ background: "#EAF1F8" }}>
+          <span className="text-2xl">🚚</span>
+          <div className="flex-1">
+            <p className="font-bold" style={{ color: AZ.ink, fontFamily: "Syne, sans-serif" }}>Return to fulfillment centre</p>
+            <span className="text-xs font-semibold" style={{ color: AZ.blue, fontFamily: "Figtree, sans-serif" }}>Initiated · on the way</span>
+          </div>
+          <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ background: AZ.blue, color: "#fff" }}><Check size={16} strokeWidth={3} /></div>
+        </div>
+
+        {/* Body */}
+        <div className="px-5 py-6 space-y-5" style={{ background: AZ.card }}>
+          <div className="space-y-2">
+            {steps.map((s) => (
+              <div key={s.label} className="flex items-center gap-2.5">
+                <span className="w-4 h-4 rounded-full flex items-center justify-center text-[10px] font-bold" style={{ background: s.done ? AZ.green : AZ.amber, color: "#fff" }}>{s.done ? "✓" : "→"}</span>
+                <span className="text-xs" style={{ color: s.done ? AZ.ink : AZ.ink2, fontFamily: "Figtree, sans-serif" }}>{s.label}</span>
+              </div>
+            ))}
+          </div>
+          <p className="text-xs leading-relaxed" style={{ color: AZ.ink2, fontFamily: "Figtree, sans-serif" }}>
+            Your item is being routed to the nearest Amazon fulfillment centre for inspection and restocking. You&apos;ll receive tracking updates on your registered contact.
+          </p>
+          <button
+            onClick={() => { onClose(); router.push("/"); }}
+            className="w-full font-semibold py-3 rounded-full transition-all hover:opacity-90 active:scale-[0.98]"
+            style={{ background: AZ.ctaYellow, border: `1px solid ${AZ.ctaYellowBorder}`, color: AZ.ink, fontFamily: "Figtree, sans-serif" }}
+          >
+            Back to Home →
+          </button>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -310,6 +364,17 @@ function NextStepPanel({
             style={{ background: AZ.ctaYellow, border: `1px solid ${AZ.ctaYellowBorder}`, color: AZ.ink, fontFamily: "Figtree, sans-serif" }}
           >
             {listState === "saving" ? "Listing…" : "List on Marketplace →"}
+          </button>
+        )}
+
+        {/* Return to fulfillment centre — alternative to listing */}
+        {isListable && listState !== "done" && (
+          <button
+            onClick={() => setFcState("done")}
+            className="w-full font-semibold py-3 rounded-full transition-all hover:opacity-90 active:scale-[0.98]"
+            style={{ background: AZ.card, border: `1px solid ${AZ.border}`, color: AZ.ink, fontFamily: "Figtree, sans-serif" }}
+          >
+            Return to fulfillment centre →
           </button>
         )}
 
@@ -458,6 +523,7 @@ function getVideoDuration(file: File): Promise<number> {
 export default function ReturnModal({ order, onClose }: { order: Order; onClose: () => void }) {
   const [step, setStep] = useState<Step>("reason");
   const [reason, setReason] = useState("");
+  const [customerNote, setCustomerNote] = useState("");
   const [mediaFiles, setMediaFiles] = useState<File[]>([]);
   const [grade, setGrade] = useState<GradeResult | null>(null);
   const [disposition, setDisposition] = useState<DispositionResult | null>(null);
@@ -540,6 +606,7 @@ export default function ReturnModal({ order, onClose }: { order: Order; onClose:
     let filesForStorage: File[] = [];
     try {
       const fd = new FormData();
+      if (customerNote.trim()) fd.append("customer_note", customerNote.trim());
 
       if (isVideo) {
         setStep("extracting");
@@ -620,19 +687,57 @@ export default function ReturnModal({ order, onClose }: { order: Order; onClose:
             <div className="space-y-2">
               <p className="font-bold" style={{ fontFamily: "Syne, sans-serif", color: AZ.ink }}>Why are you returning it?</p>
               <p className="text-xs mb-3" style={{ color: AZ.ink2, fontFamily: "Figtree, sans-serif" }}>Return reason is the strongest disposition signal.</p>
-              {RETURN_REASONS.map((r) => (
-                <button key={r.value}
-                  onClick={() => { setReason(r.value); setStep("method"); }}
-                  className="w-full text-left p-3.5 rounded-xl flex items-center gap-3 transition-all"
-                  style={{ background: AZ.surfaceAlt, border: `1px solid ${AZ.border}` }}
-                  onMouseEnter={e => (e.currentTarget.style.borderColor = AZ.borderDark)}
-                  onMouseLeave={e => (e.currentTarget.style.borderColor = AZ.border)}
-                >
-                  <span className="text-lg w-7 text-center">{r.icon}</span>
-                  <span className="font-medium text-sm" style={{ color: AZ.ink, fontFamily: "Figtree, sans-serif" }}>{r.label}</span>
-                  <span className="ml-auto text-xs" style={{ color: AZ.ink2 }}>→</span>
-                </button>
-              ))}
+              {RETURN_REASONS.map((r) => {
+                const selected = reason === r.value;
+                const needsNote = NOTE_REASONS.has(r.value);
+                return (
+                  <div key={r.value}>
+                    <button
+                      onClick={() => {
+                        if (needsNote) {
+                          setReason(r.value);
+                        } else {
+                          setReason(r.value); setCustomerNote(""); setStep("method");
+                        }
+                      }}
+                      className="w-full text-left p-3.5 rounded-xl flex items-center gap-3 transition-all"
+                      style={{ background: selected ? AZ.card : AZ.surfaceAlt, border: `1px solid ${selected ? AZ.borderDark : AZ.border}` }}
+                      onMouseEnter={e => (e.currentTarget.style.borderColor = AZ.borderDark)}
+                      onMouseLeave={e => (e.currentTarget.style.borderColor = selected ? AZ.borderDark : AZ.border)}
+                    >
+                      <span className="text-lg w-7 text-center">{r.icon}</span>
+                      <span className="font-medium text-sm" style={{ color: AZ.ink, fontFamily: "Figtree, sans-serif" }}>{r.label}</span>
+                      <span className="ml-auto text-xs" style={{ color: AZ.ink2 }}>{selected && needsNote ? "" : "→"}</span>
+                    </button>
+
+                    {/* Detail box — feeds the AI grading as a verified-against-photos hint */}
+                    {selected && needsNote && (
+                      <div className="mt-2 space-y-2 animate-fade-in">
+                        <textarea
+                          value={customerNote}
+                          onChange={(e) => setCustomerNote(e.target.value)}
+                          rows={3}
+                          maxLength={300}
+                          autoFocus
+                          placeholder={NOTE_PLACEHOLDER[r.value]}
+                          className="w-full text-sm p-3 rounded-xl outline-none resize-none"
+                          style={{ background: AZ.card, border: `1px solid ${AZ.border}`, color: AZ.ink, fontFamily: "Figtree, sans-serif" }}
+                        />
+                        <p className="text-[11px] leading-relaxed" style={{ color: AZ.ink2, fontFamily: "Figtree, sans-serif" }}>
+                          Optional — our AI uses this to guide the photo inspection, then verifies every claim against your images.
+                        </p>
+                        <button
+                          onClick={() => setStep("method")}
+                          className="w-full font-semibold py-2.5 rounded-full transition-all hover:opacity-90 active:scale-[0.98]"
+                          style={{ background: AZ.ctaYellow, border: `1px solid ${AZ.ctaYellowBorder}`, color: AZ.ink, fontFamily: "Figtree, sans-serif" }}
+                        >
+                          Continue →
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           )}
 
