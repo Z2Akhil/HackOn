@@ -583,7 +583,11 @@ export default function ReturnModal({ order, onClose }: { order: Order; onClose:
     } catch {}
     setDisposition(dispData);
 
-    if (["resell", "refurbish"].includes(dispData.decision) && filesForStorage.length > 0) {
+    // Always allow listing for resell/refurbish — even with zero inspection
+    // files (saveListingToStorage tolerates it; the passport falls back to
+    // category photos). Requiring files here left a visible "List on
+    // Marketplace" button wired to nothing.
+    if (["resell", "refurbish"].includes(dispData.decision)) {
       setPendingListing({
         grade: gradeData,
         disposition: dispData,
@@ -637,7 +641,14 @@ export default function ReturnModal({ order, onClose }: { order: Order; onClose:
     setLoading(true);
     setStep("grading");
     const gradeData = conditionToGrade(report);
-    const files = frames.slice(-3).map((b64, i) => base64ToFile(b64, `triage_frame_${i}.jpg`));
+    // A corrupt frame must not strand the flow on the "grading" spinner —
+    // convert what we can and proceed; listing works even with zero files.
+    let files: File[] = [];
+    try {
+      files = frames.slice(-3).map((b64, i) => base64ToFile(b64, `triage_frame_${i}.jpg`));
+    } catch (e) {
+      console.error("[triage] frame conversion failed:", e);
+    }
     await runDisposition(gradeData, files, undefined);
   }
 
