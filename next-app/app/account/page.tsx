@@ -1,21 +1,36 @@
 "use client";
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import ReturnModal, { DEMO_ORDERS } from "@/components/ReturnModal";
+import ReturnModal, { DEMO_ORDERS, ReturnFlow } from "@/components/ReturnModal";
 import { AZ } from "@/lib/ui-theme";
 import { Leaf, MapPin, Recycle, RotateCcw } from "lucide-react";
 
 const CDN = "https://cdn.dummyjson.com/product-images";
 
+const RETURN_WINDOW_DAYS = 10;
+const DAY_MS = 86400000;
+const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+// Dates are derived from "days ago" so the demo always shows the first order
+// inside the return window and the rest outside it, whenever it's run.
+function daysAgoDate(days: number): string {
+  const d = new Date(Date.now() - days * DAY_MS);
+  return `${d.getDate()} ${MONTHS[d.getMonth()]} ${d.getFullYear()}`;
+}
+
 const ORDERS = [
-  { id: "o006", product_name: "boAt Airdopes 141 TWS Earbuds",     category: "electronics",     mrp: 1299,  ordered: "12 Jun 2026", status: "Delivered",        returnable: true,  image: `${CDN}/mobile-accessories/apple-airpods/thumbnail.webp` },
-  { id: "o007", product_name: "OnePlus Nord CE 4 (8GB/128GB)",     category: "electronics",     mrp: 24999, ordered: "14 Jun 2026", status: "Delivered",        returnable: true,  image: `${CDN}/smartphones/oppo-a57/thumbnail.webp` },
-  { id: "o002", product_name: "Sony WH-1000XM5 Headphones",       category: "electronics",     mrp: 29990, ordered: "22 May 2026", status: "Delivered",        returnable: true,  image: `${CDN}/mobile-accessories/apple-airpods-max-silver/thumbnail.webp` },
-  { id: "o003", product_name: "Levis 511 Slim Fit Jeans",          category: "apparel",         mrp: 4999,  ordered: "1 Jun 2026",  status: "Delivered",        returnable: true,  image: `${CDN}/mens-shirts/blue-&-black-check-shirt/thumbnail.webp` },
-  { id: "o001", product_name: "Bajaj Mixer Grinder 750W",         category: "home_appliances",  mrp: 3499,  ordered: "18 May 2026", status: "Delivered",        returnable: true,  image: `${CDN}/kitchen-accessories/boxed-blender/thumbnail.webp` },
-  { id: "o004", product_name: "Bombay Dyeing Double Bedsheet Set", category: "home",            mrp: 1499,  ordered: "5 Jun 2026",  status: "Sold via ReLoop", returnable: false, image: `${CDN}/furniture/annibale-colombo-bed/thumbnail.webp` },
-  { id: "o005", product_name: "Nike Air Max 270 Sneakers (M)",     category: "apparel",         mrp: 12995, ordered: "10 Jun 2026", status: "Sold via ReLoop", returnable: false, image: `${CDN}/mens-shoes/nike-air-jordan-1-red-and-black/thumbnail.webp` },
+  { id: "o006", product_name: "boAt Airdopes 141 TWS Earbuds",     category: "electronics",     mrp: 1299,  ordered_days_ago: 4,  status: "Delivered",        returnable: true,  image: `${CDN}/mobile-accessories/apple-airpods/thumbnail.webp` },
+  { id: "o007", product_name: "OnePlus Nord CE 4 (8GB/128GB)",     category: "electronics",     mrp: 24999, ordered_days_ago: 26, status: "Delivered",        returnable: true,  image: `${CDN}/smartphones/oppo-a57/thumbnail.webp` },
+  { id: "o002", product_name: "Sony WH-1000XM5 Headphones",       category: "electronics",     mrp: 29990, ordered_days_ago: 49, status: "Delivered",        returnable: true,  image: `${CDN}/mobile-accessories/apple-airpods-max-silver/thumbnail.webp` },
+  { id: "o003", product_name: "Levis 511 Slim Fit Jeans",          category: "apparel",         mrp: 4999,  ordered_days_ago: 39, status: "Delivered",        returnable: true,  image: `${CDN}/mens-shirts/blue-&-black-check-shirt/thumbnail.webp` },
+  { id: "o001", product_name: "Bajaj Mixer Grinder 750W",         category: "home_appliances",  mrp: 3499,  ordered_days_ago: 53, status: "Delivered",        returnable: true,  image: `${CDN}/kitchen-accessories/boxed-blender/thumbnail.webp` },
+  { id: "o004", product_name: "Bombay Dyeing Double Bedsheet Set", category: "home",            mrp: 1499,  ordered_days_ago: 35, status: "Sold via ReLoop", returnable: false, image: `${CDN}/furniture/annibale-colombo-bed/thumbnail.webp` },
+  { id: "o005", product_name: "Nike Air Max 270 Sneakers (M)",     category: "apparel",         mrp: 12995, ordered_days_ago: 30, status: "Sold via ReLoop", returnable: false, image: `${CDN}/mens-shoes/nike-air-jordan-1-red-and-black/thumbnail.webp` },
 ];
+
+function inReturnWindow(order: typeof ORDERS[0]): boolean {
+  return order.ordered_days_ago <= RETURN_WINDOW_DAYS;
+}
 
 const STATUS_STYLE: Record<string, { color: string; bg: string; border: string }> = {
   "Delivered":        { color: AZ.green, bg: AZ.greenBg, border: `${AZ.green}33` },
@@ -52,6 +67,7 @@ export default function AccountPage() {
   const [draft, setDraft] = useState<Profile>(DEFAULT_PROFILE);
   const [saved, setSaved] = useState(false);
   const [returningOrder, setReturningOrder] = useState<typeof DEMO_ORDERS[0] | null>(null);
+  const [returnFlow, setReturnFlow] = useState<ReturnFlow>("return");
   const [totalCredits, setTotalCredits] = useState(PRESEED_CREDITS);
 
   useEffect(() => {
@@ -228,6 +244,9 @@ export default function AccountPage() {
         <div className="space-y-3 animate-fade-up delay-1">
           {ORDERS.map((order) => {
             const statusStyle = STATUS_STYLE[order.status] ?? STATUS_STYLE["In Transit"];
+            const returnable = order.returnable && inReturnWindow(order);
+            const secondLife = order.returnable && !inReturnWindow(order);
+            const daysLeft = RETURN_WINDOW_DAYS - order.ordered_days_ago;
             return (
               <div
                 key={order.id}
@@ -244,27 +263,47 @@ export default function AccountPage() {
                     {order.product_name}
                   </p>
                   <p className="text-xs mt-0.5" style={{ color: AZ.ink2, fontFamily: "Figtree, sans-serif" }}>
-                    ₹{order.mrp.toLocaleString("en-IN")} · {order.ordered}
+                    ₹{order.mrp.toLocaleString("en-IN")} · {daysAgoDate(order.ordered_days_ago)}
                   </p>
-                  <span
-                    className="inline-block mt-1.5 text-xs font-semibold px-2 py-0.5 rounded-md"
-                    style={{ background: statusStyle.bg, border: `1px solid ${statusStyle.border}`, color: statusStyle.color, fontFamily: "Figtree, sans-serif" }}
-                  >
-                    {order.status}
-                  </span>
+                  <div className="flex flex-wrap items-center gap-1.5 mt-1.5">
+                    <span
+                      className="inline-block text-xs font-semibold px-2 py-0.5 rounded-md"
+                      style={{ background: statusStyle.bg, border: `1px solid ${statusStyle.border}`, color: statusStyle.color, fontFamily: "Figtree, sans-serif" }}
+                    >
+                      {order.status}
+                    </span>
+                    {returnable && (
+                      <span className="text-[11px] font-semibold" style={{ color: AZ.green, fontFamily: "Figtree, sans-serif" }}>
+                        Return window: {daysLeft} day{daysLeft === 1 ? "" : "s"} left
+                      </span>
+                    )}
+                    {secondLife && (
+                      <span className="text-[11px]" style={{ color: AZ.ink2, fontFamily: "Figtree, sans-serif" }}>
+                        Return window closed
+                      </span>
+                    )}
+                  </div>
                 </div>
 
-                {order.returnable ? (
+                {returnable ? (
                   <button
-                    onClick={() => setReturningOrder(DEMO_ORDERS.find(o => o.id === order.id) ?? null)}
+                    onClick={() => { setReturnFlow("return"); setReturningOrder(DEMO_ORDERS.find(o => o.id === order.id) ?? null); }}
                     className="flex-shrink-0 inline-flex items-center gap-1 px-4 py-2 rounded-xl text-sm font-semibold transition-all hover:opacity-90 active:scale-[0.98]"
                     style={{ background: AZ.ctaYellow, border: `1px solid ${AZ.ctaYellowBorder}`, color: AZ.ink, fontFamily: "Figtree, sans-serif" }}
                   >
                     Return <RotateCcw size={14} />
                   </button>
+                ) : secondLife ? (
+                  <button
+                    onClick={() => { setReturnFlow("second_life"); setReturningOrder(DEMO_ORDERS.find(o => o.id === order.id) ?? null); }}
+                    className="flex-shrink-0 inline-flex items-center gap-1 px-4 py-2 rounded-xl text-sm font-semibold transition-all hover:opacity-90 active:scale-[0.98]"
+                    style={{ background: AZ.greenBg, border: `1px solid ${AZ.green}66`, color: AZ.green, fontFamily: "Figtree, sans-serif" }}
+                  >
+                    Second Life <Recycle size={14} />
+                  </button>
                 ) : (
                   <span className="flex-shrink-0 text-xs px-3 py-2 rounded-xl" style={{ background: AZ.surfaceAlt, color: AZ.ink2, border: `1px solid ${AZ.border}`, fontFamily: "Figtree, sans-serif" }}>
-                    {order.status === "Return Requested" ? "Processing" : "Pending"}
+                    {order.status === "Return Requested" ? "Processing" : order.status === "Sold via ReLoop" ? "✓ Sold" : "Pending"}
                   </span>
                 )}
               </div>
@@ -279,7 +318,7 @@ export default function AccountPage() {
         </div>
 
         {returningOrder && (
-          <ReturnModal order={returningOrder} onClose={() => setReturningOrder(null)} />
+          <ReturnModal order={returningOrder} flow={returnFlow} onClose={() => setReturningOrder(null)} />
         )}
       </div>
     </div>

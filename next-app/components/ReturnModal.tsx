@@ -58,6 +58,12 @@ const MOCK_DISPOSITION: DispositionResult = {
 type Order = typeof DEMO_ORDERS[0];
 type Step = "reason" | "method" | "upload" | "triage" | "extracting" | "grading" | "result";
 
+// "return"      — inside the return window: reason → grade → keep-it / disposition
+// "second_life" — after the window closes: no reason, no keep-it; grade → disposition
+//                 + instant voucher (60% of expected recovery) for resell/refurbish
+export type ReturnFlow = "return" | "second_life";
+const INSTANT_VOUCHER_SHARE = 0.6;
+
 // Map the live-triage ConditionReport onto the GradeResult the disposition
 // engine expects, so the live path feeds the exact same downstream pipeline.
 const SEVERITY_RANK: Record<string, number> = { minor: 1, moderate: 2, severe: 3 };
@@ -260,12 +266,13 @@ function KeepItAcceptedPanel({ offer, onClose }: { offer: NonNullable<Dispositio
 }
 
 function NextStepPanel({
-  disposition, otpCode, onClose, onList,
+  disposition, otpCode, onClose, onList, secondLife = false,
 }: {
   disposition: DispositionResult;
   otpCode: string;
   onClose: () => void;
   onList?: () => Promise<void>;
+  secondLife?: boolean;
 }) {
   const router = useRouter();
   const [listState, setListState] = useState<"idle" | "saving" | "done">("idle");
@@ -367,8 +374,9 @@ function NextStepPanel({
           </button>
         )}
 
-        {/* Return to fulfillment centre — alternative to listing */}
-        {isListable && listState !== "done" && (
+        {/* Return to fulfillment centre — alternative to listing. Not offered on
+            the second-life path: the item stays with the customer, nothing ships back. */}
+        {!secondLife && isListable && listState !== "done" && (
           <button
             onClick={() => setFcState("done")}
             className="w-full font-semibold py-3 rounded-full transition-all hover:opacity-90 active:scale-[0.98]"
@@ -520,9 +528,10 @@ function getVideoDuration(file: File): Promise<number> {
   });
 }
 
-export default function ReturnModal({ order, onClose }: { order: Order; onClose: () => void }) {
-  const [step, setStep] = useState<Step>("reason");
-  const [reason, setReason] = useState("");
+export default function ReturnModal({ order, onClose, flow = "return" }: { order: Order; onClose: () => void; flow?: ReturnFlow }) {
+  const isSecondLife = flow === "second_life";
+  const [step, setStep] = useState<Step>(isSecondLife ? "method" : "reason");
+  const [reason, setReason] = useState(isSecondLife ? "second_life" : "");
   const [customerNote, setCustomerNote] = useState("");
   const [mediaFiles, setMediaFiles] = useState<File[]>([]);
   const [grade, setGrade] = useState<GradeResult | null>(null);
@@ -564,8 +573,10 @@ export default function ReturnModal({ order, onClose }: { order: Order; onClose:
     setMediaFiles((prev) => prev.filter((_, i) => i !== idx));
   }
 
-  const STEPS = ["Reason", "Inspect", "Result"];
-  const STEP_IDX: Record<Step, number> = { reason: 0, method: 0, upload: 1, triage: 1, extracting: 1, grading: 1, result: 2 };
+  const STEPS = isSecondLife ? ["Inspect", "Result"] : ["Reason", "Inspect", "Result"];
+  const STEP_IDX: Record<Step, number> = isSecondLife
+    ? { reason: 0, method: 0, upload: 0, triage: 0, extracting: 0, grading: 0, result: 1 }
+    : { reason: 0, method: 0, upload: 1, triage: 1, extracting: 1, grading: 1, result: 2 };
   const currentStepIdx = STEP_IDX[step];
 
   // Shared: given a grade + any inspection files, run disposition and show result.
@@ -667,7 +678,7 @@ export default function ReturnModal({ order, onClose }: { order: Order; onClose:
               <img src={order.image} alt={order.product_name} className="w-full h-full object-cover" />
             </div>
             <div>
-              <p className="text-sm font-semibold leading-tight" style={{ color: AZ.ink, fontFamily: "Figtree, sans-serif" }}>Return Request</p>
+              <p className="text-sm font-semibold leading-tight" style={{ color: AZ.ink, fontFamily: "Figtree, sans-serif" }}>{isSecondLife ? "Second Life" : "Return Request"}</p>
               <p className="text-xs" style={{ color: AZ.ink2, fontFamily: "Figtree, sans-serif" }}>{order.product_name}</p>
             </div>
           </div>
@@ -756,7 +767,11 @@ export default function ReturnModal({ order, onClose }: { order: Order; onClose:
           {step === "method" && (
             <div className="space-y-3">
               <p className="font-bold" style={{ fontFamily: "Syne, sans-serif", color: AZ.ink }}>How would you like to inspect the item?</p>
-              <p className="text-xs mb-1" style={{ color: AZ.ink2, fontFamily: "Figtree, sans-serif" }}>AI grades the item to decide the best outcome — keep, resell, refurbish, donate or recycle.</p>
+              <p className="text-xs mb-1" style={{ color: AZ.ink2, fontFamily: "Figtree, sans-serif" }}>
+                {isSecondLife
+                  ? "The return window has closed — but the loop hasn't. AI grades your item and finds its best second life: resell, refurbish, donate or recycle."
+                  : "AI grades the item to decide the best outcome — keep, resell, refurbish, donate or recycle."}
+              </p>
 
               <button
                 onClick={() => setStep("triage")}
@@ -789,7 +804,9 @@ export default function ReturnModal({ order, onClose }: { order: Order; onClose:
                 <span className="text-xs" style={{ color: AZ.ink2 }}>→</span>
               </button>
 
-              <button onClick={() => setStep("reason")} className="w-full text-sm" style={{ color: AZ.ink2 }}>← Back</button>
+              {!isSecondLife && (
+                <button onClick={() => setStep("reason")} className="w-full text-sm" style={{ color: AZ.ink2 }}>← Back</button>
+              )}
             </div>
           )}
 
@@ -912,12 +929,13 @@ export default function ReturnModal({ order, onClose }: { order: Order; onClose:
           {step === "result" && grade && disposition && (
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <p className="font-bold" style={{ fontFamily: "Syne, sans-serif", color: AZ.ink }}>Return Decision</p>
+                <p className="font-bold" style={{ fontFamily: "Syne, sans-serif", color: AZ.ink }}>{isSecondLife ? "Second Life Decision" : "Return Decision"}</p>
                 <span className="text-xs px-2 py-0.5 rounded" style={{ background: AZ.greenBg, color: AZ.green, border: `1px solid ${AZ.border}`, fontFamily: "Figtree, sans-serif" }}>AI Complete ✓</span>
               </div>
 
-              {/* Keep-It negotiation takes priority when the item is worth keeping */}
-              {disposition.keep_it?.eligible && keepItChoice === "pending" ? (
+              {/* Keep-It negotiation takes priority when the item is worth keeping.
+                  Never offered on the second-life path — there is no return to prevent. */}
+              {!isSecondLife && disposition.keep_it?.eligible && keepItChoice === "pending" ? (
                 <>
                   <GradeCard grade={grade} />
                   <KeepItPanel
@@ -927,7 +945,7 @@ export default function ReturnModal({ order, onClose }: { order: Order; onClose:
                     onDecline={() => setKeepItChoice("declined")}
                   />
                 </>
-              ) : disposition.keep_it?.eligible && keepItChoice === "accepted" ? (
+              ) : !isSecondLife && disposition.keep_it?.eligible && keepItChoice === "accepted" ? (
                 <>
                   <GradeCard grade={grade} />
                   <KeepItAcceptedPanel offer={disposition.keep_it} onClose={onClose} />
@@ -935,11 +953,25 @@ export default function ReturnModal({ order, onClose }: { order: Order; onClose:
               ) : (
                 <>
                   <GradeCard grade={grade} />
+                  {isSecondLife && ["resell", "refurbish"].includes(disposition.decision) && (
+                    <div className="rounded-xl p-4 flex items-center gap-3 animate-fade-up" style={{ background: AZ.greenBg, border: `1px solid ${AZ.green}66` }}>
+                      <span className="text-2xl">⚡</span>
+                      <div className="flex-1">
+                        <p className="text-sm font-bold" style={{ color: AZ.ink, fontFamily: "Syne, sans-serif" }}>
+                          Instant voucher: ₹{Math.round(disposition.estimated_recovery * INSTANT_VOUCHER_SHARE).toLocaleString("en-IN")}
+                        </p>
+                        <p className="text-xs mt-0.5" style={{ color: AZ.ink2, fontFamily: "Figtree, sans-serif" }}>
+                          60% of expected recovery, credited when you list. Remaining ₹{(disposition.estimated_recovery - Math.round(disposition.estimated_recovery * INSTANT_VOUCHER_SHARE)).toLocaleString("en-IN")} paid on sale.
+                        </p>
+                      </div>
+                    </div>
+                  )}
                   <DispositionCard disposition={disposition} productName={order.product_name} mrp={order.mrp} />
                   <NextStepPanel
                     disposition={disposition}
                     otpCode={otpCode}
                     onClose={onClose}
+                    secondLife={isSecondLife}
                     onList={pendingListing ? async () => {
                       const listingId = await saveListingToStorage(
                         order,

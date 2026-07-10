@@ -61,8 +61,14 @@ export async function POST(req: NextRequest) {
       incrementListingFlag(product_id);
     }
 
+    // Second-life requests arrive after the return window; phrase the reason so
+    // the narrator doesn't describe them as a return.
+    const reasonLabel = return_reason === "second_life"
+      ? "customer-initiated second-life listing (outside return window, not a return)"
+      : return_reason;
+
     const geminiReasoning = await getGeminiReasoning(
-      result.decision, result.ev_table, grade, product_name ?? "Product", return_reason
+      result.decision, result.ev_table, grade, product_name ?? "Product", reasonLabel
     );
 
     const fallback = MOCK_REASONING[result.decision] ?? MOCK_REASONING["resell"];
